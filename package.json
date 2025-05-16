@@ -15,26 +15,36 @@
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start"
   },
   "dependencies": {
-    "@payloadcms/next": "3.33.0",
-    "@payloadcms/payload-cloud": "3.33.0",
-    "@payloadcms/richtext-lexical": "3.33.0",
+    "@payloadcms/db-postgres": "3.37.0",
+    "@payloadcms/next": "3.37.0",
+    "@payloadcms/payload-cloud": "3.37.0",
+    "@payloadcms/richtext-lexical": "3.37.0",
+    "@payloadcms/translations": "^3.37.0",
     "cross-env": "^7.0.3",
     "graphql": "^16.8.1",
+    "leaflet": "^1.9.4",
     "next": "15.3.0",
-    "payload": "3.33.0",
+    "payload": "^3.37.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "sharp": "0.32.6",
-    "@payloadcms/db-postgres": "3.33.0"
+    "react-leaflet": "^5.0.0",
+    "sharp": "0.34.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/line-clamp": "^0.4.4",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/leaflet": "^1.9.17",
     "@types/node": "^22.5.4",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.2",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9.16.0",
     "eslint-config-next": "15.3.0",
+    "postcss": "^8.4.31",
     "prettier": "^3.4.2",
+    "tailwindcss": "^3.4.17",
     "typescript": "5.7.3"
   },
   "engines": {
@@ -44,6 +54,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "sharp"
+    ],
+    "ignoredBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "esbuild"
     ]
   }
 }
