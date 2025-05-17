@@ -1,6 +1,5 @@
 // src/admin/components/FormattedDateCell.tsx
 import React from 'react';
-import { JSX } from 'react/jsx-runtime'; // Nécessaire pour les types JSX
 
 // --- Fonction utilitaire de formatage de date ---
 const formatDateForAdminDisplay = (dateString?: string | null): string | null => {

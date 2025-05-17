@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { JSX } from 'react/jsx-runtime'; 
 import Link from 'next/link';
+import Image from 'next/image'; 
 import MapLoader from '@/components/MapLoader'; 
 import ArticleContentRenderer from '@/components/ArticleContentRenderer';
 
@@ -75,7 +75,7 @@ interface VerrerieType {
 interface VerreriePageProps { params: { slug: string; }; }
 
 // --- Fonctions Utilitaires ---
-const formatDate = (dateString?: string | null): string | null => { if (!dateString) return null; try { const date = new Date(dateString); if (isNaN(date.getTime())) { const yearMatch = dateString.match(/\d{4}/); if (yearMatch) return yearMatch[0]; return dateString; } return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`; } catch (e) { return dateString; } };
+const formatDate = (dateString?: string | null): string | null => { if (!dateString) return null; try { const date = new Date(dateString); if (isNaN(date.getTime())) { const yearMatch = dateString.match(/\d{4}/); if (yearMatch) return yearMatch[0]; return dateString; } return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`; } catch (_e) { return dateString; } };
 const displayDateGroup = (datePrecise?: string | null, descriptionDate?: string | null): string => { const formattedPreciseDate = formatDate(datePrecise); if (formattedPreciseDate && datePrecise && !isNaN(new Date(datePrecise).getTime())) { return formattedPreciseDate; } if (descriptionDate) { return descriptionDate; } return 'N/A';};
 
 // --- Composants de Rendu Spécifiques ---
@@ -92,7 +92,7 @@ const PersonalityListItem: React.FC<{person: PersonnaliteType, fonction?: string
       </div>
       <div className="flex flex-wrap items-baseline gap-x-1.5 min-w-0">
         <h4 className="font-semibold text-blueGray-700 font-serif leading-tight whitespace-nowrap">
-          <Link href={person.slug ? `/personnalites/${person.slug}` : '#'} className="text-gold hover:text-gold-dark transition-colors">
+          <Link href={person.slug ? `/personnalites/${person.slug}` : '#'} className="text-gold hover:text-gold-dark no-underline hover:underline decoration-gold hover:decoration-gold-dark transition-colors">
             {nomCompletAffichage}
           </Link>
         </h4>
@@ -106,7 +106,14 @@ const PersonalityListItem: React.FC<{person: PersonnaliteType, fonction?: string
   );
 };
 
-const SuggestionCard: React.FC<{ name: string; period: string; link: string; image?: string }> = ({ image, name, period, link }) => { return ( <a href={link} className="block bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1"> {image ? <img src={image} alt={name} className="w-full h-36 object-cover rounded-md mb-4" /> : <div className="w-full h-36 bg-blueGray-100 rounded-md mb-4 flex items-center justify-center text-blueGray-400 font-sans">Image N/A</div> } <h3 className="text-lg font-semibold text-blueGray-800 font-serif mb-1">{name}</h3> <p className="text-xs text-blueGray-500 font-sans mb-3">{period}</p> <span className="inline-block text-sm text-gold hover:text-gold-dark font-semibold font-sans">En savoir plus &rarr;</span> </a> ); };
+const SuggestionCard: React.FC<{ name: string; period: string; link: string; image?: string }> = ({ image, name, period, link }) => { return ( <a href={link} 
+  className="block bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 group text-blueGray-600 no-underline"
+  > {image ? <img src={image} alt={name} className="w-full h-36 object-cover rounded-md mb-4" /> : <div className="w-full h-36 bg-blueGray-100 rounded-md mb-4 flex items-center justify-center text-blueGray-400 font-sans">Image N/A</div> } <h3 className="text-lg font-semibold text-blueGray-800 font-serif mb-1">{name}</h3> <p className="text-xs text-blueGray-500 font-sans mb-3">{period}</p> 
+    <span className="inline-block text-sm text-gold group-hover:text-gold-dark font-semibold font-sans group-hover:underline decoration-gold group-hover:decoration-gold-dark">
+      En savoir plus &rarr;
+    </span>
+  </a> 
+  ); };
 
 const VerrierListItem: React.FC<{verrier: VerrierType, metier?: string, periode?: string}> = ({ verrier, metier, periode }) => {
   const nomCompletAffichage = verrier.nomComplet || `${verrier.prenom || ''} ${verrier.nom || ''}`.trim() || 'Verrier Inconnu';
@@ -124,7 +131,7 @@ const VerrierListItem: React.FC<{verrier: VerrierType, metier?: string, periode?
     </svg>
       <div className="flex flex-wrap items-baseline gap-x-1.5 min-w-0"> 
         <h4 className="font-semibold text-blueGray-700 font-serif leading-tight whitespace-nowrap my-0">
-          <Link href={verrier.slug ? `/verriers/${verrier.slug}` : '#'} className="text-gold hover:text-gold-dark transition-colors">
+          <Link href={verrier.slug ? `/verriers/${verrier.slug}` : '#'} className="text-gold hover:text-gold-dark no-underline hover:underline decoration-gold hover:decoration-gold-dark transition-colors">
             {nomCompletAffichage}
           </Link>
         </h4>
@@ -143,7 +150,7 @@ const VerrierListItem: React.FC<{verrier: VerrierType, metier?: string, periode?
 // --- Fonction de Récupération des Données ---
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 async function fetchFullRelatedDoc(collectionSlug: string, id: string | number): Promise<any | null> { try { const apiUrl = `${payloadUrl}/api/${collectionSlug}/${id}?depth=0&locale=fr&fallback-locale=fr`; const response = await fetch(apiUrl, { cache: 'no-store' }); if (!response.ok) { console.error(`[fetchRelatedDoc] Erreur API pour ${collectionSlug} ID ${id} (${response.status}): ${await response.text()}`); return null; } return await response.json(); } catch (error) { console.error(`[fetchRelatedDoc] Exception pour ${collectionSlug} ID ${id}:`, error); return null; } }
-async function getVerrerie(slug: string): Promise<VerrerieType | null> { try { const apiUrl = `${payloadUrl}/api/verreries?where[slug][equals]=${slug}&depth=2&locale=fr&fallback-locale=fr&limit=1`; const response = await fetch(apiUrl, { cache: 'no-store' }); if (!response.ok) { console.error(`Erreur API Payload (${response.status}): ${await response.text()}`); throw new Error(`Failed to fetch verrerie: ${response.status}`); } const data = await response.json(); if (!data.docs || data.docs.length === 0) { console.warn(`[getVerrerie] Aucune verrerie trouvée pour le slug: ${slug}`); return null; } let verrerie = data.docs[0] as VerrerieType; if (verrerie.engagements && verrerie.engagements.length > 0) { const populatedEngagements = await Promise.all( verrerie.engagements.map(async (engagement) => { if (engagement.personneConcernee && (typeof engagement.personneConcernee.value === 'string' || typeof engagement.personneConcernee.value === 'number')) { const personneId = engagement.personneConcernee.value; const relationTo = engagement.personneConcernee.relationTo; const personneDetails = await fetchFullRelatedDoc(relationTo, personneId); if (personneDetails) { return { ...engagement, personneConcernee: { relationTo, value: personneDetails } }; } } return engagement; }) ); verrerie.engagements = populatedEngagements.filter(e => e !== null && e.personneConcernee && typeof e.personneConcernee.value === 'object') as EngagementType[]; } if (verrerie.fondateurs && verrerie.fondateurs.length > 0) { const populatedFondateurs = await Promise.all( verrerie.fondateurs.map(async (personOrId) => { if (personOrId && (typeof personOrId === 'string' || typeof personOrId === 'number')) { return await fetchFullRelatedDoc('personnalites', personOrId); } return personOrId; }) ); verrerie.fondateurs = populatedFondateurs.filter(p => p !== null) as PersonnaliteType[]; } return verrerie; } catch (error) { console.error("[getVerrerie]", error); return null; } }
+async function getVerrerie(slug: string): Promise<VerrerieType | null> { try { const apiUrl = `${payloadUrl}/api/verreries?where[slug][equals]=${slug}&depth=2&locale=fr&fallback-locale=fr&limit=1`; const response = await fetch(apiUrl, { cache: 'no-store' }); if (!response.ok) { console.error(`Erreur API Payload (${response.status}): ${await response.text()}`); throw new Error(`Failed to fetch verrerie: ${response.status}`); } const data = await response.json(); if (!data.docs || data.docs.length === 0) { console.warn(`[getVerrerie] Aucune verrerie trouvée pour le slug: ${slug}`); return null; } const verrerie = data.docs[0] as VerrerieType; if (verrerie.engagements && verrerie.engagements.length > 0) { const populatedEngagements = await Promise.all( verrerie.engagements.map(async (engagement) => { if (engagement.personneConcernee && (typeof engagement.personneConcernee.value === 'string' || typeof engagement.personneConcernee.value === 'number')) { const personneId = engagement.personneConcernee.value; const relationTo = engagement.personneConcernee.relationTo; const personneDetails = await fetchFullRelatedDoc(relationTo, personneId); if (personneDetails) { return { ...engagement, personneConcernee: { relationTo, value: personneDetails } }; } } return engagement; }) ); verrerie.engagements = populatedEngagements.filter(e => e !== null && e.personneConcernee && typeof e.personneConcernee.value === 'object') as EngagementType[]; } if (verrerie.fondateurs && verrerie.fondateurs.length > 0) { const populatedFondateurs = await Promise.all( verrerie.fondateurs.map(async (personOrId) => { if (personOrId && (typeof personOrId === 'string' || typeof personOrId === 'number')) { return await fetchFullRelatedDoc('personnalites', personOrId); } return personOrId; }) ); verrerie.fondateurs = populatedFondateurs.filter(p => p !== null) as PersonnaliteType[]; } return verrerie; } catch (error) { console.error("[getVerrerie]", error); return null; } }
 
 // --- Composant de Page ---
 export default async function VerreriePage({ params }: VerreriePageProps) {
@@ -210,13 +217,69 @@ export default async function VerreriePage({ params }: VerreriePageProps) {
                         />
                       );
                     }
-                    return <div key={engagement.id} className="text-sm text-blueGray-500 italic">Données de personnalité incomplètes pour l'engagement ID: {engagement.id}</div>;
+                    return <div key={engagement.id} className="text-sm text-blueGray-500 italic">Données de personnalité incomplètes pour engagement ID: {engagement.id}</div>;
                   })}
                 </div>
               </section>
             )}
-            {verrerie.imagesEtMedias && verrerie.imagesEtMedias.length > 0 && ( <section id="galerie" className="mt-16"> <h2 className="text-3xl font-bold text-blueGray-800 mb-8 border-b-2 border-blueGray-200 pb-4 font-serif">Galerie d'Images</h2> <div className="grid grid-cols-2 md:grid-cols-3 gap-4"> {verrerie.imagesEtMedias.map((media) => ( media && typeof media.url === 'string' && media.url.trim() !== '' ? (<div key={media.id} className="relative rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 group bg-slate-50 h-56 md:h-64"> <img src={`${payloadBaseUrl}${media.url}`} alt={media.alt || media.filename || 'Image de la verrerie'} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300" width={media.width || 300} height={media.height || 224} /> {media.filename && (<div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs text-center p-2 truncate transition-opacity duration-300 opacity-0 group-hover:opacity-100"> {media.filename} </div>)} </div>) : null ))} </div> </section> )}
-            {verrerie.sourcesBibliographiques && verrerie.sourcesBibliographiques.length > 0 && ( <section id="sources" className="mt-16"> <h2 className="text-3xl font-bold text-blueGray-800 mb-8 border-b-2 border-blueGray-200 pb-4 font-serif">Sources</h2> <ul className="list-disc list-inside space-y-2 text-blueGray-600 font-sans text-sm"> {verrerie.sourcesBibliographiques.map(source => ( <li key={source.id || Math.random().toString(36).substr(2, 9)}> <strong>{source.titre || 'Source non titrée'}</strong> {source.auteur && ` par ${source.auteur}`} {source.detailsPublication && ` (${source.detailsPublication})`} {source.url && <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold-dark hover:underline ml-1"> [Lien]</a>} </li> ))} </ul> </section> )}
+
+            {verrerie.imagesEtMedias && verrerie.imagesEtMedias.length > 0 && (
+              <section id="galerie" className="mt-16">
+                <h2 className="text-3xl font-bold text-blueGray-800 mb-8 border-b-2 border-blueGray-200 pb-4 font-serif">
+                  Galerie d&apos;Images {/* Correction : apostrophe échappée */}
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {verrerie.imagesEtMedias.map((mediaItem) => {
+                    // Assumant que 'mediaItem' est de type 'MediaItem' que vous avez défini
+                    // et que si 'mediaItem' est un objet Upload de Payload, 'mediaItem.url' est le chemin relatif
+                    // et 'mediaItem.width' / 'mediaItem.height' sont les dimensions de l'image originale.
+                    // S'il s'agit d'une relation, 'mediaItem' pourrait être l'objet Media populé.
+
+                    // Tentative de déterminer si mediaItem est un objet Media populé ou juste une chaîne d'ID
+                    // (adaptez cette logique si mediaItem est toujours un objet à cause de depth=2)
+                    const media = (typeof mediaItem === 'object' && mediaItem !== null) ? mediaItem : null;
+
+                    if (media && media.url && typeof media.url === 'string' && media.url.trim() !== '') {
+                      const imageUrl = `${payloadBaseUrl}${media.url}`;
+                      const altText = media.alt || media.filename || `Image de la verrerie ${verrerie.nomPrincipal}`;
+                      
+                      // Dimensions pour next/image. Utiliser les dimensions réelles si disponibles, sinon des valeurs par défaut.
+                      // Payload stocke souvent width/height sur l'objet media.
+                      const imageWidth = typeof media.width === 'number' && media.width > 0 ? media.width : 600; // Valeur par défaut raisonnable
+                      const imageHeight = typeof media.height === 'number' && media.height > 0 ? media.height : 400; // Valeur par défaut raisonnable
+
+                      return (
+                        <div
+                          key={media.id || media.url} // Utiliser media.id si disponible, sinon media.url comme clé
+                          className="relative rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 group bg-slate-50 aspect-[4/3]" // Utiliser aspect-ratio pour la responsivité de la hauteur
+                        >
+                          <Image
+                            src={imageUrl}
+                            alt={altText}
+                            fill // Fait que l'image remplit le conteneur parent. Le parent doit avoir une position relative.
+                            className="object-cover transform group-hover:scale-105 transition-transform duration-300"
+                            // Pour 'fill', width et height ne sont pas nécessaires sur Image, mais le parent doit avoir des dimensions
+                            // ou un ratio d'aspect. J'ai ajouté aspect-[4/3] au parent.
+                            // Si vous ne voulez pas 'fill', vous devez fournir width et height à Image
+                            // et ajuster le className (par exemple, w-full h-auto ou des dimensions fixes)
+                            // width={imageWidth} // Nécessaire si 'fill' n'est pas utilisé
+                            // height={imageHeight} // Nécessaire si 'fill' n'est pas utilisé
+                            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw" // Aide Next.js à choisir la bonne taille d'image source
+                          />
+                          {media.filename && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs text-center p-2 truncate transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+                              {media.filename}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    return null; // Si media n'est pas valide ou n'a pas d'URL
+                  })}
+                </div>
+              </section>
+            )}
+            {verrerie.sourcesBibliographiques && verrerie.sourcesBibliographiques.length > 0 && ( <section id="sources" className="mt-16"> <h2 className="text-3xl font-bold text-blueGray-800 mb-8 border-b-2 border-blueGray-200 pb-4 font-serif">Sources</h2> <ul className="list-disc list-inside space-y-2 text-blueGray-600 font-sans text-sm"> {verrerie.sourcesBibliographiques.map(source => ( <li key={source.id || Math.random().toString(36).substr(2, 9)}> <strong>{source.titre || 'Source non titrée'}</strong> {source.auteur && ` par ${source.auteur}`} {source.detailsPublication && ` (${source.detailsPublication})`} {source.url && <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold-dark hover:underline decoration-gold hover:decoration-gold-dark ml-1"> [Lien]</a>} </li> ))} </ul> </section> )}
             
             <section id="suggestions" className="mt-16 pt-8 border-t-2 border-blueGray-200">
                 <h2 className="text-3xl font-bold text-blueGray-800 mb-8 text-center font-serif">À Découvrir Aussi</h2>
@@ -306,7 +369,7 @@ export default async function VerreriePage({ params }: VerreriePageProps) {
                                 />
                             );
                         }
-                        return <div key={engagement.id} className="text-sm text-blueGray-500 italic">Données de verrier incomplètes pour l'engagement ID: {engagement.id}</div>;
+                        return <div key={engagement.id} className="text-sm text-blueGray-500 italic">Données de verrier incomplètes pour engagement ID: {engagement.id}</div>;
                     })}
                   </div>
                 </div>

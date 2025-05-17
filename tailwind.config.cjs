@@ -48,11 +48,11 @@ module.exports = {
         DEFAULT: {
           css: {
             // ... (vos autres variables --tw-prose-body, etc. ou styles directs)
-            'a': {
-              color: theme('colors.gold.DEFAULT'), // Couleur du texte
-              textDecoration: 'underline',        // Assurer le soulignement
-              textDecorationColor: theme('colors.gold.DEFAULT'), // Couleur du soulignement
-              fontWeight: 'inherit', // ou 'normal' pour éviter le gras par défaut des navigateurs
+            'a': { // Cibler directement les balises <a> dans un contexte 'prose'
+              color: theme('colors.gold.DEFAULT'),
+              textDecoration: 'underline',        // Ou 'none' si vous ne voulez pas de soulignement par défaut
+              textDecorationColor: theme('colors.gold.DEFAULT'), // FORCER la couleur du soulignement
+              fontWeight: 'inherit', // Pour éviter le style gras par défaut du navigateur
               '&:hover': {
                 color: theme('colors.gold.dark'),
                 textDecorationColor: theme('colors.gold.dark'),
@@ -64,10 +64,10 @@ module.exports = {
           css: {
             // ... (vos autres variables --tw-prose-body, etc. ou styles directs)
             'a': {
-              color: theme('colors.gold.DEFAULT'), // Couleur du texte
-              textDecoration: 'underline',        // Assurer le soulignement
-              textDecorationColor: theme('colors.gold.DEFAULT'), // Couleur du soulignement
-              fontWeight: 'inherit', // ou 'normal' pour éviter le gras par défaut des navigateurs
+              color: theme('colors.gold.DEFAULT'),
+              textDecoration: 'underline',
+              textDecorationColor: theme('colors.gold.DEFAULT'),
+              fontWeight: 'inherit',
               '&:hover': {
                 color: theme('colors.gold.dark'),
                 textDecorationColor: theme('colors.gold.dark'),

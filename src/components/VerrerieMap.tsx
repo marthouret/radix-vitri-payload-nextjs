@@ -2,7 +2,6 @@
 'use client'; 
 
 import React, { useRef } from 'react'; // Retiré useEffect, useState pour simplification
-import { JSX } from 'react/jsx-runtime'; 
 import 'leaflet/dist/leaflet.css';
 import L, { LatLngExpression, Map as LeafletMap } from 'leaflet'; 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';

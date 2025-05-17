@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Playfair_Display, Lato } from 'next/font/google'; // Import des polices
-import './globals.css'; // Assurez-vous que ce fichier importe les styles Tailwind
+import './globals.css'; 
 
 // Configuration de la police Playfair Display (pour les titres et le corps serif)
 const playfairDisplay = Playfair_Display({

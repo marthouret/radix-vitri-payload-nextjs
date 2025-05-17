@@ -12,8 +12,8 @@ const ArticleContentRenderer: React.FC<ArticleContentRendererProps> = ({ content
     return <p className="italic text-blueGray-500">Contenu non disponible.</p>;
   }
 
-  const renderNodes = (nodes: any[], parentKey: string = 'acr-node'): (JSX.Element | string)[] => {
-    return nodes.map((node, index) => {
+  const renderNodes = (nodes: any[], _parentKey: string = 'acr-node'): (JSX.Element | string)[] => {
+    return nodes.map((node, _index) => {
       const key = `<span class="math-inline">\{parentKey\}\-</span>{node.type || 'unknown'}-<span class="math-inline">\{index\}\-</span>{node.format || ''}-${Math.random().toString(36).substr(2, 9)}`;
 
       if (node.type === 'paragraph') {
@@ -54,16 +54,20 @@ const ArticleContentRenderer: React.FC<ArticleContentRendererProps> = ({ content
         const url = node.fields?.url;
         const newTab = node.fields?.newTab;
         const childrenContent = renderNodes(node.children || [], key);
+        // La ligne ci-dessous est celle qui tente d'appliquer le style
         const linkClasses = "text-gold hover:text-gold-dark underline decoration-gold hover:decoration-gold-dark";
 
         if (linkType === 'internal' && doc?.value && typeof doc.value === 'object' && doc.value !== null && doc.value.slug && doc.relationTo) {
-          const href = `/<span class="math-inline">\{doc\.relationTo\}/</span>{doc.value.slug}`;
+          const href = `/${doc.relationTo}/${doc.value.slug}`; // Correction : interpolation correcte
           return <Link key={key} href={href} target={newTab ? '_blank' : undefined} rel={newTab ? 'noopener noreferrer' : undefined} className={linkClasses}>{childrenContent}</Link>;
         } else if (linkType === 'custom' && url) {
           return <a key={key} href={url} target={newTab ? '_blank' : undefined} rel={newTab ? 'noopener noreferrer' : undefined} className={linkClasses}>{childrenContent}</a>;
         }
         // Fallback pour les liens mal formés ou contenu de lien simple
-        return <span key={key} className={linkClasses}>{childrenContent}</span>; // ou juste React.Fragment si pas de style par défaut
+        // Si c'est juste du texte qui devrait être un lien mais n'est pas structuré comme tel,
+        // il ne sera pas rendu comme un <a> par cette logique.
+        // Si c'est un lien sans href valide, on peut le rendre comme un span stylé :
+        return <span key={key} className={linkClasses.replace('underline', 'no-underline')}>{childrenContent}</span>; // Exemple : pas de soulignement si ce n'est pas un vrai lien
       }
 
       if (node.type === 'text') {

@@ -1,8 +1,6 @@
 // src/app/verriers/[slug]/page.tsx
 import { notFound } from 'next/navigation';
 import React from 'react';
-import Link from 'next/link';
-import { JSX } from 'react/jsx-runtime';
 // NOUVEL IMPORT (ou vérification que le chemin est bon)
 import ArticleContentRenderer from '@/components/ArticleContentRenderer'; 
 
@@ -57,7 +55,7 @@ const formatDateForDisplay = (dateString?: string | null): string => {
       return dateString;
     }
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-  } catch (e) {
+  } catch (_e) {
     return dateString;
   }
 };
@@ -101,7 +99,7 @@ async function getVerrier(slug: string): Promise<VerrierFromAPI | null> {
       console.warn(`[getVerrier] Aucun verrier trouvé pour le slug: ${slug}`);
       return null;
     }
-    let verrier = data.docs[0] as VerrierFromAPI;
+    const verrier = data.docs[0] as VerrierFromAPI;
 
     if (verrier.lieuDeNaissance && typeof verrier.lieuDeNaissance === 'string') {
       const lieuDetails = await fetchFullLieu(verrier.lieuDeNaissance);
@@ -196,7 +194,7 @@ export default async function VerrierPage({ params }: VerrierPageProps) {
                   )}
                   {verrier.periodePrincipaleActivite && (
                      <div>
-                      <dt className="font-medium text-blueGray-500">Période d'activité :</dt>
+                      <dt className="font-medium text-blueGray-500">Période d&apos;activité :</dt>
                       <dd className="ml-1">{verrier.periodePrincipaleActivite}</dd>
                     </div>
                   )}

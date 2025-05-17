@@ -1,7 +1,7 @@
 // src/collections/Engagements.ts
 import { CollectionConfig } from 'payload'; // Ou 'payload' si c'est votre import standard
 
-const metiersVerriersOptions = [
+const _metiersVerriersOptions = [
   { label: 'Tamiseur', value: 'tamiseur' },
   { label: 'Souffleur de verre', value: 'souffleur_de_verre' },
   { label: 'Composeur', value: 'composeur' },
@@ -13,7 +13,7 @@ const metiersVerriersOptions = [
   { label: 'Autre métier verrier', value: 'autre_metier_verrier' },
 ];
 
-const rolesPersonnaliteOptions = [
+const _rolesPersonnaliteOptions = [
   { label: 'Fondateur', value: 'fondateur' }, // Peut aussi être géré par un champ direct sur Verrerie
   { label: 'Directeur', value: 'directeur' },
   { label: 'Propriétaire', value: 'proprietaire' },
