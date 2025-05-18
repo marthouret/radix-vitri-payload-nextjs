@@ -3,12 +3,19 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-
-// Importer le CSS de Leaflet ici aussi, pour s'assurer qu'il est chargé
-// avant que VerrerieMap (chargé dynamiquement) ne tente de l'utiliser.
 import 'leaflet/dist/leaflet.css';
 
 console.log('[MapLoader] Script MapLoader.tsx est en cours d\'exécution (niveau module)');
+
+// Importez l'interface MapPoint si elle est définie dans VerrerieMap.tsx ou un fichier partagé
+// Pour l'instant, je la redéfinis ici pour la clarté.
+interface MapPoint {
+  id: string;
+  slug: string;
+  nomPrincipal: string;
+  coordonnees: [number, number];
+  villeOuCommune?: string;
+}
 
 // Définir un composant nommé pour le cas d'erreur de l'import dynamique
 const DynamicImportErrorFallback: React.FC = () => {
@@ -42,33 +49,28 @@ const VerrerieMap = dynamic(() => {
 });
 
 interface MapLoaderProps {
-  coordinates?: [number, number]; // [longitude, latitude]
-  nom: string;
+  points: MapPoint[]; // MODIFIÉ : Tableau de points
 }
 
-const MapLoader: React.FC<MapLoaderProps> = ({ coordinates, nom }) => {
-  console.log('[MapLoader Component] Rendu avec props:', { coordinates, nom });
+const MapLoader: React.FC<MapLoaderProps> = ({ points }) => {
+  console.log('[MapLoader Component] Rendu avec props:', { points });
 
-  if (!coordinates || !Array.isArray(coordinates) || coordinates.length !== 2) {
-    console.log('[MapLoader Component] Coordonnées invalides ou manquantes. Affichage du message d\'erreur.');
+  if (!points || points.length === 0) {
     return (
       <div className="p-4 text-orange-700 bg-orange-100 border border-orange-500 rounded">
         <p className="font-semibold">Informations de localisation :</p>
-        <p className="italic">
-          {coordinates ? `Format des coordonnées incorrect. Reçu : ${JSON.stringify(coordinates)}` : 'Coordonnées non disponibles pour afficher la carte.'}
-        </p>
+        <p className="italic">Aucune verrerie avec coordonnées à afficher sur la carte.</p>
       </div>
     );
   }
 
-  console.log('[MapLoader Component] Coordonnées valides. Tentative de rendu de VerrerieMap.');
   return (
-    // J'ai retiré les bordures de débogage violettes, remettez-les si besoin pour le layout.
     <div className="w-full h-full relative">
-      <VerrerieMap coordinates={coordinates} nom={nom} />
+      <VerrerieMap points={points} /> {/* MODIFIÉ : Passe le tableau de points */}
     </div>
   );
 };
+
 // Optionnel mais bonne pratique pour les outils de dev React:
 MapLoader.displayName = 'MapLoader';
 

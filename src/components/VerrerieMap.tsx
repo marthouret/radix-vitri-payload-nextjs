@@ -1,10 +1,10 @@
 // src/components/VerrerieMap.tsx
-'use client'; 
-
-import React, { useRef } from 'react'; // Retiré useEffect, useState pour simplification
+'use client';
+import React, { useEffect, useRef } from 'react'; // Ajout de useEffect
 import 'leaflet/dist/leaflet.css';
-import L, { LatLngExpression, Map as LeafletMap } from 'leaflet'; 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L, { LatLngExpression, Map as LeafletMap, LatLngBoundsLiteral } from 'leaflet'; // Ajout de LatLngBoundsLiteral
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'; // Ajout de useMap
+import Link from 'next/link'; // Pour les liens dans les popups
 
 console.log('[VerrerieMap] Script VerrerieMap.tsx est en cours d\'exécution (niveau module)');
 
@@ -20,49 +20,71 @@ if (typeof window !== 'undefined') {
   }
 }
 
-interface VerrerieMapProps {
-  coordinates: [number, number]; 
-  nom: string;
-  zoomLevel?: number;
+// Interface pour chaque point sur la carte
+interface MapPoint {
+  id: string;
+  slug: string;
+  nomPrincipal: string;
+  coordonnees: [number, number]; // [longitude, latitude]
+  villeOuCommune?: string;
 }
 
-const VerrerieMap: React.FC<VerrerieMapProps> = ({ coordinates, nom, zoomLevel = 14 }) => {
-  const mapRef = useRef<LeafletMap | null>(null); 
-  const position: LatLngExpression = [coordinates[1], coordinates[0]]; 
-  
-  console.log('[VerrerieMap Component] Rendu. Position pour Leaflet (lat, lon):', position);
+interface VerrerieMapProps {
+  points: MapPoint[]; // Maintenant un tableau de points
+  // center?: [number, number]; // Optionnel, on peut le calculer
+  defaultZoomLevel?: number; // Zoom par défaut si un seul point ou si pas de fitBounds
+  singlePointZoomLevel?: number; // Zoom spécifique pour quand il n'y a qu'un seul point
+}
 
-  const handleMapReady = () => {
-    console.log('[VerrerieMap] Map prête (whenReady).');
-    const map = mapRef.current;
-    if (map) {
-      console.log('[VerrerieMap] Instance de la carte disponible via ref:', map);
-      // On peut appeler invalidateSize ici si on constate toujours des problèmes après le premier rendu
-      // avec une hauteur de 100%, mais avec une hauteur fixe, ce n'est souvent pas nécessaire pour le rendu initial.
-      setTimeout(() => {
-        if (map.getContainer()){ // Vérifier si la carte est toujours montée
-            map.invalidateSize();
-            console.log('[VerrerieMap] map.invalidateSize() appelée après délai.');
-        }
-      }, 150);
-    } else {
-      console.warn('[VerrerieMap] mapRef.current est null dans handleMapReady.');
+// Un petit composant pour ajuster les limites de la carte
+const FitBoundsToMarkers: React.FC<{ points: MapPoint[] }> = ({ points }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (points && points.length > 1) { // CHANGEMENT : > 1 au lieu de > 0
+      const bounds = points.map(point => [point.coordonnees[1], point.coordonnees[0]] as [number, number]);
+      if (bounds.length > 0) {
+        map.fitBounds(bounds as LatLngBoundsLiteral, { padding: [50, 50] });
+      }
+    } else if (points && points.length === 1) {
+      // Pour un seul point, on peut juste centrer la carte sur ce point
+      // Le zoom sera géré par la prop 'zoom' du MapContainer
+      map.setView([points[0].coordonnees[1], points[0].coordonnees[0]]);
     }
-  };
-  
-  const mapKey = coordinates.join(',');
+  }, [points, map]);
+  return null;
+};
+
+const VerrerieMap: React.FC<VerrerieMapProps> = ({ 
+  points, 
+  defaultZoomLevel = 6, // Zoom pour la carte avec plusieurs points avant fitBounds
+  singlePointZoomLevel = 14 // Zoom spécifique pour quand il n'y a qu'un seul point
+}) => { 
+  const mapRef = useRef<LeafletMap | null>(null);
+
+  let initialCenter: LatLngExpression;
+  let currentZoomLevel: number;
+
+  if (points && points.length === 1) {
+    initialCenter = [points[0].coordonnees[1], points[0].coordonnees[0]]; // Centre sur l'unique point
+    currentZoomLevel = singlePointZoomLevel; // Utilise le zoom pour un seul point
+  } else {
+    initialCenter = [46.603354, 1.888334]; // Centre approximatif de la France (pour plusieurs points avant fitBounds)
+    currentZoomLevel = defaultZoomLevel;
+  }
+
+  if (!points || points.length === 0) {
+    return <div className="p-4 text-orange-700 bg-orange-100 border border-orange-500 rounded">Aucun point à afficher sur la carte.</div>;
+  }
 
   return (
-    <MapContainer 
-      key={mapKey} 
-      ref={mapRef} 
-      center={position} 
-      zoom={zoomLevel} 
-      scrollWheelZoom={true} 
-      // Application d'une hauteur fixe en pixels directement ici
-      // style={{ height: '320px', width: '100%' }} 
+    <MapContainer
+      ref={mapRef}
+      center={initialCenter}
+      zoom={currentZoomLevel}
+      scrollWheelZoom={true}
       style={{ height: '100%', width: '100%' }}
-      whenReady={handleMapReady} 
+      // whenReady est toujours utile pour invalidateSize si besoin
+      whenReady={() => setTimeout(() => mapRef.current?.invalidateSize(), 0)} 
       placeholder={ 
         <div 
           style={{height: "100%", width: "100%", backgroundColor: "#e0e0e0", display: 'flex', alignItems: 'center', justifyContent: 'center'}} 
@@ -76,11 +98,18 @@ const VerrerieMap: React.FC<VerrerieMapProps> = ({ coordinates, nom, zoomLevel =
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Marker position={position}>
-        <Popup>
-          {nom}
-        </Popup>
-      </Marker>
+      {points.map(point => (
+        <Marker key={point.id} position={[point.coordonnees[1], point.coordonnees[0]] /* Leaflet: Lat, Lon */}>
+          <Popup>
+            <Link href={`/verreries/${point.slug}`} className="font-semibold text-gold hover:underline">
+              {point.nomPrincipal}
+            </Link>
+            {point.villeOuCommune && <div className="text-sm text-blueGray-600">{point.villeOuCommune}</div>}
+          </Popup>
+        </Marker>
+      ))}
+      {/* Ce composant ajustera la vue pour montrer tous les marqueurs */}
+      <FitBoundsToMarkers points={points} />
     </MapContainer>
   );
 };

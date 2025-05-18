@@ -55,6 +55,15 @@ interface LieuType {
   notesHistoriquesSurLeLieu?: any; // Type RichText
 }
 
+// AJOUT/VÉRIFICATION : Interface pour les points de la carte (doit correspondre à celle utilisée par MapLoader/VerrerieMap)
+interface MapPoint {
+  id: string;
+  slug: string;
+  nomPrincipal: string;
+  coordonnees: [number, number]; // [longitude, latitude]
+  villeOuCommune?: string;
+}
+
 interface VerrerieType {
   id: string; 
   nomPrincipal: string; 
@@ -80,24 +89,44 @@ const displayDateGroup = (datePrecise?: string | null, descriptionDate?: string 
 
 // --- Composants de Rendu Spécifiques ---
 // const ArticleContentRenderer: React.FC<{ content: any }> = ({ content }) => { if (!content || !content.root || !content.root.children) { return <p className="italic text-blueGray-500">Contenu non disponible.</p>; } const renderNodes = (nodes: any[], parentKey: string = 'node'): (JSX.Element | string)[] => { return nodes.map((node, index) => { const key = `${parentKey}-${node.type || 'unknown'}-${index}-${node.format || ''}-${Math.random().toString(36).substr(2, 5)}`; if (node.type === 'paragraph') { return <p key={key} className="mb-4 last:mb-0">{renderNodes(node.children || [], key)}</p>; } if (node.type === 'heading') { const Tag = node.tag as keyof JSX.IntrinsicElements; return <Tag key={key}>{renderNodes(node.children || [], key)}</Tag>; } if (node.type === 'list') { const ListTag = node.tag === 'ol' ? 'ol' : 'ul'; return <ListTag key={key} className={ListTag === 'ol' ? 'list-decimal pl-5 mb-4' : 'list-disc pl-5 mb-4'}>{renderNodes(node.children || [], key)}</ListTag>; } if (node.type === 'listitem') { return <li key={key} className="mb-1">{renderNodes(node.children || [], key)}</li>; } if (node.type === 'link') { const linkType = node.fields?.linkType; const doc = node.fields?.doc; const url = node.fields?.url; const newTab = node.fields?.newTab; const childrenContent = renderNodes(node.children || [], key); if (linkType === 'internal' && doc?.value && typeof doc.value === 'object' && doc.value !== null && doc.value.slug) { const href = `/${doc.relationTo}/${doc.value.slug}`; return <Link key={key} href={href} target={newTab ? '_blank' : undefined} rel={newTab ? 'noopener noreferrer' : undefined} className="text-gold hover:text-gold-dark underline">{childrenContent}</Link>; } else if (linkType === 'custom' && url) { return <a key={key} href={url} target={newTab ? '_blank' : undefined} rel={newTab ? 'noopener noreferrer' : undefined} className="text-gold hover:text-gold-dark underline">{childrenContent}</a>; } return <React.Fragment key={key}>{childrenContent}</React.Fragment>; } if (node.type === 'text') { let textElement: JSX.Element | string = <React.Fragment key={`text-${key}`}>{node.text}</React.Fragment>; if (node.format === 1) textElement = <strong key={`strong-${key}`}>{textElement}</strong>; if (node.format === 2) textElement = <em key={`em-${key}`}>{textElement}</em>; if (node.format === 8) textElement = <code key={`code-${key}`}>{textElement}</code>; return textElement; } if (node.type === 'linebreak') { return <br key={key} />; } return node.text || ''; }).filter(item => item !== null && item !== ''); }; return <>{renderNodes(content.root.children, 'root')}</>; };
-const InlineDocument: React.FC<{ src?: string; caption?: string; altText?: string }> = ({ src, caption, altText }) => { if (!src) return null; return ( <figure className="my-8 clear-both overflow-hidden rounded-lg border border-blueGray-200 bg-white shadow-md max-w-xl mx-auto"> <img src={src} alt={altText || caption || "Document historique"} className="w-full h-auto object-contain max-h-[600px]" /> {caption && <figcaption className="mt-2 text-sm text-blueGray-600 italic px-3 py-2 bg-blueGray-50 text-center font-sans">{caption}</figcaption>} </figure> ); };
+const InlineDocument: React.FC<{ src?: string; caption?: string; altText?: string }> = ({ src, caption, altText }) => {
+  if (!src) return null;
+  const payloadBaseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+  const imageUrl = `${payloadBaseUrl}${src}`;
+  return (
+    <figure className="my-8 clear-both overflow-hidden rounded-lg border border-blueGray-200 bg-white shadow-md max-w-xl mx-auto">
+      <div className="relative w-full aspect-[4/3]">
+        <Image src={imageUrl} alt={altText || caption || "Document historique"} fill className="object-contain max-h-[600px]" sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" />
+      </div>
+      {caption && <figcaption className="mt-2 text-sm text-blueGray-600 italic px-3 py-2 bg-blueGray-50 text-center font-sans">{caption}</figcaption>}
+    </figure>
+  );
+};
 
 // PersonalityListItem (pour affichage en liste simple dans la colonne principale)
 const PersonalityListItem: React.FC<{person: PersonnaliteType, fonction?: string, periode?: string}> = ({ person, fonction, periode }) => {
   const nomCompletAffichage = person.nomComplet || `${person.prenom || ''} ${person.nom || ''}`.trim() || 'Personnalité Inconnue';
   return (
+    // Gardez les classes de ce div comme dans la version que vous trouviez la plus acceptable visuellement
+    // Le 'border-b border-blueGray-100 last:border-b-0' est le trait fin.
     <div className="flex items-center space-x-3 py-2 border-b border-blueGray-100 last:border-b-0">
+      {/* Gardez votre icône et son conteneur comme vous les aviez */}
       <div className="w-8 h-8 rounded-full bg-blueGray-200 border border-gold flex items-center justify-center shrink-0">
-        <svg className="w-5 h-5 text-blueGray-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"></path></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-blueGray-400 group-hover:text-gold transition-colors">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
       </div>
       <div className="flex flex-wrap items-baseline gap-x-1.5 min-w-0">
         <h4 className="font-semibold text-blueGray-700 font-serif leading-tight whitespace-nowrap">
-          <Link href={person.slug ? `/personnalites/${person.slug}` : '#'} className="text-gold hover:text-gold-dark no-underline hover:underline decoration-gold hover:decoration-gold-dark transition-colors">
+          <Link
+            href={person.slug ? `/personnalites/${person.slug}` : '#'}
+            className="text-gold hover:text-gold-dark text-m no-underline hover:underline decoration-gold hover:decoration-gold-dark transition-colors"
+          >
             {nomCompletAffichage}
           </Link>
         </h4>
-        {(fonction || periode) && 
-          <span className="text-xs text-blueGray-600 font-sans whitespace-nowrap">
+        {(fonction || periode) &&
+          <span className="text-s text-blueGray-600 font-sans whitespace-nowrap">
             {fonction}{fonction && periode && <span className="text-blueGray-400">, </span>}{periode && <span className="text-blueGray-500">{periode}</span>}
           </span>
         }
@@ -106,14 +135,24 @@ const PersonalityListItem: React.FC<{person: PersonnaliteType, fonction?: string
   );
 };
 
-const SuggestionCard: React.FC<{ name: string; period: string; link: string; image?: string }> = ({ image, name, period, link }) => { return ( <a href={link} 
-  className="block bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 group text-blueGray-600 no-underline"
-  > {image ? <img src={image} alt={name} className="w-full h-36 object-cover rounded-md mb-4" /> : <div className="w-full h-36 bg-blueGray-100 rounded-md mb-4 flex items-center justify-center text-blueGray-400 font-sans">Image N/A</div> } <h3 className="text-lg font-semibold text-blueGray-800 font-serif mb-1">{name}</h3> <p className="text-xs text-blueGray-500 font-sans mb-3">{period}</p> 
-    <span className="inline-block text-sm text-gold group-hover:text-gold-dark font-semibold font-sans group-hover:underline decoration-gold group-hover:decoration-gold-dark">
-      En savoir plus &rarr;
-    </span>
-  </a> 
-  ); };
+const SuggestionCard: React.FC<{ name: string; period: string; link: string; image?: string }> = ({ name, period, link, image }) => {
+  return (
+    <Link href={link} className="block bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 group text-blueGray-600 no-underline">
+      {image ? (
+        <div className="relative w-full h-36 rounded-md mb-4 overflow-hidden">
+         <Image src={image} alt={name} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+        </div>
+      ) : (
+        <div className="w-full h-36 bg-blueGray-100 rounded-md mb-4 flex items-center justify-center text-blueGray-400 font-sans">Image N/A</div>
+      )}
+      <h3 className="text-lg font-semibold text-blueGray-800 font-serif mb-1">{name}</h3>
+      <p className="text-xs text-blueGray-500 font-sans mb-3">{period}</p>
+      <span className="inline-block text-sm text-gold group-hover:text-gold-dark font-semibold font-sans group-hover:underline decoration-gold group-hover:decoration-gold-dark">
+        En savoir plus &rarr;
+      </span>
+    </Link>
+  );
+};
 
 const VerrierListItem: React.FC<{verrier: VerrierType, metier?: string, periode?: string}> = ({ verrier, metier, periode }) => {
   const nomCompletAffichage = verrier.nomComplet || `${verrier.prenom || ''} ${verrier.nom || ''}`.trim() || 'Verrier Inconnu';
@@ -181,6 +220,18 @@ export default async function VerreriePage({ params }: VerreriePageProps) {
            typeof eng.personneConcernee.value === 'object'
   ) || [];
 
+    // PRÉPARER LES DONNÉES POUR LA CARTE DE CETTE VERRERIE SPÉCIFIQUE
+  let verreriePourLaCarte: MapPoint[] = [];
+  if (lieu && lieu.coordonnees && verrerie.slug && verrerie.nomPrincipal) {
+    verreriePourLaCarte = [{
+      id: verrerie.id,
+      slug: verrerie.slug,
+      nomPrincipal: verrerie.nomPrincipal,
+      coordonnees: lieu.coordonnees,
+      villeOuCommune: lieu.villeOuCommune,
+    }];
+  }
+
   return (
     <div className="bg-cream text-blueGray-700 font-serif min-h-screen"> 
       <div className="container mx-auto px-4 py-8 md:px-6 md:py-12"> 
@@ -203,19 +254,14 @@ export default async function VerreriePage({ params }: VerreriePageProps) {
 
             {/* Section "Personnalités Liées" (via Engagements) - dans la colonne principale */}
             {personnalitesEngagements.length > 0 && (
-              <section id="personnalites-engagees" className="mt-16">
-                <h2 className="text-3xl font-bold text-blueGray-800 mb-8 border-b-2 border-blueGray-200 pb-4 font-serif">Personnalités Liées</h2>
-                <div className="space-y-3"> 
+              <section id="personnalites-engagees" className="mt-10"> {/* Réduit le mt-16 à mt-10 */}
+                <h2 className="text-2xl font-semibold text-blueGray-800 mb-5 font-serif border-b border-blueGray-200 pb-2.5"> {/* Titre un peu plus petit, marge et padding ajustés */}
+                  Personnalités Clés
+                </h2>
+                <div className="space-y-0"> {/* Réduit l'espace entre les items à 0, car le py-2.5 et border-b de l'item gèrent déjà l'espacement */}
                   {personnalitesEngagements.map(engagement => {
                     if (engagement.personneConcernee && typeof engagement.personneConcernee.value === 'object' && engagement.personneConcernee.value !== null) {
-                      return (
-                        <PersonalityListItem 
-                          key={engagement.id} 
-                          person={engagement.personneConcernee.value as PersonnaliteType} 
-                          fonction={engagement.fonctionOuMetier}
-                          periode={engagement.periodeActiviteTexte}
-                        />
-                      );
+                      return ( <PersonalityListItem key={engagement.id} person={engagement.personneConcernee.value as PersonnaliteType} fonction={engagement.fonctionOuMetier} periode={engagement.periodeActiviteTexte} /> );
                     }
                     return <div key={engagement.id} className="text-sm text-blueGray-500 italic">Données de personnalité incomplètes pour engagement ID: {engagement.id}</div>;
                   })}
@@ -341,13 +387,13 @@ export default async function VerreriePage({ params }: VerreriePageProps) {
                 </dl>
               </div>
 
-              {lieu?.coordonnees && (
+              {verreriePourLaCarte.length > 0 && ( // Vérifie s'il y a des données pour la carte
                 <div className="bg-white p-6 rounded-xl shadow-xl border border-blueGray-100">
                   <h3 className="text-2xl font-semibold text-blueGray-800 mb-4 font-serif">Localisation</h3>
                   <div className="h-72 rounded-lg overflow-hidden border border-blueGray-200">
                     <MapLoader
-                      coordinates={lieu.coordonnees}
-                      nom={verrerie.nomPrincipal}
+                      points={verreriePourLaCarte} // Passer le tableau de points
+                      // La prop 'nom' n'est plus nécessaire pour MapLoader car VerrerieMap la prend de chaque 'point'
                     />
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 // src/app/page.tsx
 import Link from 'next/link';
 import React from 'react';
+import MapLoader from '@/components/MapLoader'; 
 // ArticleContentRenderer n'est plus utilisé sur CETTE page si on simplifie les résumés
 // import ArticleContentRenderer from '@/components/ArticleContentRenderer';
 
@@ -41,7 +42,51 @@ const CatalogueTeaser = () => {
   );
 };
 
-const MapAndFiltersSection = () => {
+interface VerrerieMapPoint {
+  id: string;
+  slug: string;
+  nomPrincipal: string;
+  coordonnees: [number, number]; // [longitude, latitude]
+  villeOuCommune?: string; // Optionnel, pour la popup
+}
+
+async function getVerreriesForMap(): Promise<VerrerieMapPoint[]> {
+  try {
+    // On veut les verreries qui ont des coordonnées.
+    // depth=1 devrait suffire pour populer lieuPrincipal.coordonnees
+    // Il faut peut-être ajuster le filtre si lieuPrincipal peut ne pas avoir de coordonnées.
+    const apiUrl = `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/verreries?limit=300&depth=1&where[lieuPrincipal.coordonnees][exists]=true`;
+    const response = await fetch(apiUrl, { cache: 'no-store' }); // Ou 'force-cache' ou options de revalidation
+    if (!response.ok) {
+      console.error(`[getVerreriesForMap] Erreur API (${response.status}): ${await response.text()}`);
+      return [];
+    }
+    const data = await response.json();
+
+    return data.docs
+      .map((doc: any): VerrerieMapPoint | null => {
+        // S'assurer que lieuPrincipal est un objet et a des coordonnées
+        if (doc.lieuPrincipal && typeof doc.lieuPrincipal === 'object' && doc.lieuPrincipal.coordonnees) {
+          return {
+            id: doc.id,
+            slug: doc.slug,
+            nomPrincipal: doc.nomPrincipal,
+            coordonnees: doc.lieuPrincipal.coordonnees,
+            villeOuCommune: doc.lieuPrincipal.villeOuCommune,
+          };
+        }
+        return null;
+      })
+      .filter((item: VerrerieMapPoint | null): item is VerrerieMapPoint => item !== null); // Filtrer les nulls
+  } catch (error) {
+    console.error('[getVerreriesForMap] Exception:', error);
+    return [];
+  }
+}
+
+const MapAndFiltersSection = async () => {
+  const verreriesForMap = await getVerreriesForMap();
+
   return (
     <section className="py-12 md:py-16 bg-white">
       <div className="container mx-auto px-4">
@@ -50,7 +95,12 @@ const MapAndFiltersSection = () => {
             <h3 className="text-2xl font-semibold text-blueGray-800 mb-4 font-serif">Carte des verreries</h3>
             <div className="bg-blueGray-100 rounded-lg shadow border border-blueGray-200 flex-grow min-h-[450px] md:min-h-[500px] lg:min-h-[600px] flex items-center justify-center text-blueGray-500 relative overflow-hidden">
               <div className="absolute inset-0">
-                <span className="italic">Carte Interactive (Conteneur Prêt)</span>
+                {/* MODIFIÉ : Appel à MapLoader avec les points */}
+                {verreriesForMap.length > 0 ? (
+                  <MapLoader points={verreriesForMap} />
+                ) : (
+                  <span className="italic p-4">Aucune donnée de carte à afficher.</span>
+                )}
               </div>
             </div>
           </div>
