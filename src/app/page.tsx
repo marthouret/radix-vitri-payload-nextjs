@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import React from 'react';
 import MapLoader from '@/components/MapLoader'; 
+import MapAndFiltersClientWrapper from '@/components/MapAndFiltersClientWrapper';
 // ArticleContentRenderer n'est plus utilisé sur CETTE page si on simplifie les résumés
 // import ArticleContentRenderer from '@/components/ArticleContentRenderer';
 
@@ -46,8 +47,10 @@ interface VerrerieMapPoint {
   id: string;
   slug: string;
   nomPrincipal: string;
+  nomsAlternatifs?: string[];
   coordonnees: [number, number]; // [longitude, latitude]
   villeOuCommune?: string; // Optionnel, pour la popup
+  region?: string; // Champ nécessaire uniquement pour les filtres de recherche, pas pour la carte dynamique
 }
 
 async function getVerreriesForMap(): Promise<VerrerieMapPoint[]> {
@@ -67,12 +70,26 @@ async function getVerreriesForMap(): Promise<VerrerieMapPoint[]> {
       .map((doc: any): VerrerieMapPoint | null => {
         // S'assurer que lieuPrincipal est un objet et a des coordonnées
         if (doc.lieuPrincipal && typeof doc.lieuPrincipal === 'object' && doc.lieuPrincipal.coordonnees) {
+          let mappedNomsAlternatifs: string[] = []; // Initialiser comme un tableau vide
+          if (doc.nomsAlternatifs && Array.isArray(doc.nomsAlternatifs)) { // Gestion du tableau de noms alternatifs (peut être un tableau vide)
+            mappedNomsAlternatifs = doc.nomsAlternatifs
+              .map((altObj: any) => {
+                // S'assurer que altObj est un objet et a une propriété 'nom' de type string
+                if (altObj && typeof altObj.nom === 'string') {
+                  return altObj.nom;
+                }
+                return null; // Retourner null pour les éléments non conformes
+              })
+              .filter((nom: string | null): nom is string => nom !== null); // Filtrer les nulls pour ne garder que les chaînes valides
+          }
           return {
             id: doc.id,
             slug: doc.slug,
             nomPrincipal: doc.nomPrincipal,
+            nomsAlternatifs: mappedNomsAlternatifs, // Utiliser la version mappée
             coordonnees: doc.lieuPrincipal.coordonnees,
             villeOuCommune: doc.lieuPrincipal.villeOuCommune,
+            region: doc.lieuPrincipal.region,
           };
         }
         return null;
@@ -86,59 +103,20 @@ async function getVerreriesForMap(): Promise<VerrerieMapPoint[]> {
 
 const MapAndFiltersSection = async () => {
   const verreriesForMap = await getVerreriesForMap();
+  console.log('Verreries récupérées pour la carte (serveur):', JSON.stringify(verreriesForMap.slice(0, 5), null, 2)); // Affiche les 5 premiers pour la lisibilité
 
   return (
     <section className="py-12 md:py-16 bg-white">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          <div className="lg:col-span-2 flex flex-col">
-            <h3 className="text-2xl font-semibold text-blueGray-800 mb-4 font-serif">Carte des verreries</h3>
-            <div className="bg-blueGray-100 rounded-lg shadow border border-blueGray-200 flex-grow min-h-[450px] md:min-h-[500px] lg:min-h-[600px] flex items-center justify-center text-blueGray-500 relative overflow-hidden">
-              <div className="absolute inset-0">
-                {/* MODIFIÉ : Appel à MapLoader avec les points */}
-                {verreriesForMap.length > 0 ? (
-                  <MapLoader points={verreriesForMap} />
-                ) : (
-                  <span className="italic p-4">Aucune donnée de carte à afficher.</span>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="lg:col-span-1">
-            <h3 className="text-2xl font-semibold text-blueGray-800 mb-4 font-serif">Rechercher des verreries</h3>
-            <div className="space-y-4 p-6 bg-blueGray-50 rounded-lg shadow">
-              <div>
-                <label htmlFor="region" className="block text-sm font-medium text-blueGray-700 font-sans">Région</label>
-                <select id="region" name="region" className="mt-1 block w-full p-2 border border-blueGray-300 rounded-md shadow-sm focus:ring-gold focus:border-gold font-sans">
-                  <option>Sélectionner une région...</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="ville" className="block text-sm font-medium text-blueGray-700 font-sans">Ville</label>
-                <select id="ville" name="ville" className="mt-1 block w-full p-2 border border-blueGray-300 rounded-md shadow-sm focus:ring-gold focus:border-gold font-sans" disabled>
-                  <option>Sélectionner une ville...</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="verrerie-select" className="block text-sm font-medium text-blueGray-700 font-sans">Verrerie</label>
-                <select id="verrerie-select" name="verrerie-select" className="mt-1 block w-full p-2 border border-blueGray-300 rounded-md shadow-sm focus:ring-gold focus:border-gold font-sans" disabled>
-                  <option>Sélectionner une verrerie...</option>
-                </select>
-              </div>
-              <button
-                type="button"
-                className="w-full bg-everglade hover:bg-everglade-clear text-white font-semibold py-2.5 px-6 rounded-lg shadow transition duration-300"
-              >
-                Voir la liste
-              </button>
-            </div>
-            <h3 className="text-2xl font-semibold text-blueGray-800 mb-4 mt-8 font-serif">Rechercher un verrier</h3>
-            <div className="space-y-4 p-6 bg-blueGray-50 rounded-lg shadow">
-              <input type="text" placeholder="Nom du verrier" className="mt-1 block w-full p-2 border border-blueGray-300 rounded-md shadow-sm focus:ring-gold focus:border-gold font-sans" />
-              <button type="button" className="w-full bg-everglade hover:bg-everglade-clear text-white font-semibold py-2.5 px-6 rounded-lg shadow transition duration-300">Rechercher</button>
-            </div>
-          </div>
-        </div>
+        {/*
+          ICI : Nous appelons MapAndFiltersClientWrapper.
+          Ce composant client va maintenant gérer :
+          - L'affichage de la grille à deux colonnes.
+          - La colonne de gauche avec la carte (qui deviendra dynamique).
+          - La colonne de droite avec les filtres (qui deviendront interactifs).
+          Tout le JSX de la grille que vous aviez ici est maintenant DANS MapAndFiltersClientWrapper.
+        */}
+        <MapAndFiltersClientWrapper initialVerreries={verreriesForMap} />
       </div>
     </section>
   );

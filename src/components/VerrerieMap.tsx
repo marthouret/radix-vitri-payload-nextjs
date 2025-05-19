@@ -36,21 +36,35 @@ interface VerrerieMapProps {
   singlePointZoomLevel?: number; // Zoom spécifique pour quand il n'y a qu'un seul point
 }
 
+interface FitBoundsToMarkersProps { // Pour le recentrage/zoom dynamique
+  points: MapPoint[];
+  singlePointZoomLevel: number; 
+}
+
 // Un petit composant pour ajuster les limites de la carte
-const FitBoundsToMarkers: React.FC<{ points: MapPoint[] }> = ({ points }) => {
+const FitBoundsToMarkers: React.FC<FitBoundsToMarkersProps> = ({ points, singlePointZoomLevel }) => {
   const map = useMap();
   useEffect(() => {
-    if (points && points.length > 1) { // CHANGEMENT : > 1 au lieu de > 0
-      const bounds = points.map(point => [point.coordonnees[1], point.coordonnees[0]] as [number, number]);
-      if (bounds.length > 0) {
-        map.fitBounds(bounds as LatLngBoundsLiteral, { padding: [50, 50] });
+    if (!map) return; // S'assurer que la carte est initialisée
+    if (points && points.length === 1) {
+      const [singlePoint] = points;
+      // Leaflet attend [latitude, longitude]
+      const latLng: LatLngExpression = [singlePoint.coordonnees[1], singlePoint.coordonnees[0]];
+      map.flyTo(latLng, singlePointZoomLevel, { duration: 2.5 }); // Utiliser flyTo et le zoom spécifique
+    } else if (points && points.length > 1) {
+      const boundsArray = points.map(point => [point.coordonnees[1], point.coordonnees[0]] as [number, number]);
+      // Vérifier que boundsArray n'est pas vide avant d'appeler fitBounds
+      if (boundsArray.length > 0) {
+        map.fitBounds(boundsArray as LatLngBoundsLiteral, { padding: [50, 50] });
       }
-    } else if (points && points.length === 1) {
-      // Pour un seul point, on peut juste centrer la carte sur ce point
-      // Le zoom sera géré par la prop 'zoom' du MapContainer
-      map.setView([points[0].coordonnees[1], points[0].coordonnees[0]]);
+    } else if (points && points.length === 0) {
+        // Optionnel : si aucun point n'est sélectionné (après avoir été filtré),
+        // revenir à une vue par défaut. MapLoader gère déjà un message,
+        // mais si VerrerieMap est toujours rendu, il faut décider quoi afficher.
+        // Par exemple, la vue initiale de la France.
+        map.flyTo([46.603354, 1.888334], 6, { duration: 2.5 }); // Zoom par défaut sur la France (valeur de defaultZoomLevel)
     }
-  }, [points, map]);
+  }, [points, map, singlePointZoomLevel]);
   return null;
 };
 
@@ -109,7 +123,7 @@ const VerrerieMap: React.FC<VerrerieMapProps> = ({
         </Marker>
       ))}
       {/* Ce composant ajustera la vue pour montrer tous les marqueurs */}
-      <FitBoundsToMarkers points={points} />
+      <FitBoundsToMarkers points={points} singlePointZoomLevel={singlePointZoomLevel} />
     </MapContainer>
   );
 };
