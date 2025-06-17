@@ -36,9 +36,8 @@ async function getHistoire(slug: string): Promise<HistoireType | null> {
 }
 
 // --- Fonction pour les métadonnées de la page ---
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const resolvedParams = await params;
-  const histoire = await getHistoire(resolvedParams.slug);
+export async function generateMetadata({ params }: { params: any }): Promise<Metadata> {
+  const histoire = await getHistoire(params.slug);
   
   return {
     title: histoire?.title || 'Histoire non trouvée',
@@ -47,9 +46,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 // --- Le composant de la page ---
-export default async function HistoirePage({ params }: { params: { slug: string } }) {
-  const resolvedParams = await params;
-  const histoire = await getHistoire(resolvedParams.slug);
+export default async function HistoirePage({ params }: { params: any }) {
+  const histoire = await getHistoire(params.slug);
 
   if (!histoire) {
     return notFound();

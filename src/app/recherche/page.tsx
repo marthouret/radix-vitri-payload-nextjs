@@ -33,12 +33,9 @@ async function searchPersonnes(query: string): Promise<VerrierAvecEngagements[]>
 }
 
 // Le composant de la page de recherche
-export default async function SearchPage({ searchParams }: { searchParams?: { q?: string } }) {
-  const resolvedSearchParams = await searchParams;
-  const query = resolvedSearchParams?.q || '';
-
-  // La fonction renvoie maintenant des Verriers avec leurs engagements
-const personnesTrouvees: VerrierAvecEngagements[] = await searchPersonnes(query);
+export default async function SearchPage({ searchParams }: { searchParams: any }) {
+  const query = searchParams?.q || '';
+  const personnesTrouvees = await searchPersonnes(query);
 
 // On trie les engagements de chaque personne par ordre chronologique
 personnesTrouvees.forEach(personne => {

@@ -165,10 +165,8 @@ async function getPersonnalite(slug: string): Promise<PersonnaliteDetailType | n
 }
 
 // --- Composant de Page ---
-export default async function PersonnalitePage({ params }: PersonnalitePageProps) {
-  const resolvedParams = await params; 
-  const { slug } = resolvedParams; 
-  const personnalite = await getPersonnalite(slug);
+export default async function PersonnalitePage({ params }: { params: any }) {
+  const personnalite = await getPersonnalite(params.slug);
 
   if (!personnalite) {
     notFound(); 

@@ -169,7 +169,6 @@ export interface VerrerieType {
   updatedAt?: string;
   createdAt?: string;
 }
-interface VerreriePageProps { params: { slug: string; }; }
 
 // --- Fonctions Utilitaires ---
 // const displayDateGroup = (datePrecise?: string | null, descriptionDate?: string | null): string => { const formattedPreciseDate = formatDate(datePrecise); if (formattedPreciseDate && datePrecise && !isNaN(new Date(datePrecise).getTime())) { return formattedPreciseDate; } if (descriptionDate) { return descriptionDate; } return 'N/A';};
@@ -322,14 +321,9 @@ async function getVerrerie(slug: string): Promise<VerrerieType | null> {
   } 
 }
 
-type Props = {
-  params: { slug: string };
-};
-
-export async function generateMetadata(
-  { params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const verrerie = await getVerrerie(slug); // Récupérer les données pour le titre
+export async function generateMetadata({ params }: { params: any }): Promise<Metadata> {
+  // On récupère les données de la verrerie pour générer les métadonnées
+  const verrerie = await getVerrerie(params.slug); // Récupérer les données pour le titre
 
   if (!verrerie) {
     return {
@@ -345,9 +339,8 @@ export async function generateMetadata(
 }
 
 // --- Composant de Page ---
-export default async function VerreriePage({ params }: VerreriePageProps) {
-  const { slug } = await params;
-  const verrerie = await getVerrerie(slug);
+export default async function VerreriePage({ params }: { params: any }) {
+  const verrerie = await getVerrerie(params.slug);
 
   console.log("Données brutes pour la verrerie (nombre d'engagements) :", JSON.stringify(verrerie?.engagements?.length, null, 2));
 

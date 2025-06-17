@@ -103,10 +103,6 @@ interface VerrierFromAPI {
   evenementsBiographiques?: EvenementBiographiqueFromAPI[]; // Tableau des événements biographiques (relations) du verrier courant
 }
 
-interface VerrierPageProps {
-  params: { slug: string };
-}
-
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
 // --- Fonctions Utilitaires ---
@@ -394,14 +390,8 @@ async function getVerrier(slug: string): Promise<VerrierFromAPI | null> {
   }
 }
 
-type Props = {
-  params: { slug: string };
-};
-
-export async function generateMetadata(
-  { params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const verrier = await getVerrier(slug); // Récupérer les données pour le titre
+export async function generateMetadata({ params }: { params: any }): Promise<Metadata> {
+  const verrier = await getVerrier(params.slug); // Récupérer les données pour le titre et les autres infos.
 
   if (!verrier) {
     return {
@@ -417,10 +407,9 @@ export async function generateMetadata(
 }
 
 // --- Composant de Page ---
-export default async function VerrierPage({ params }: VerrierPageProps) {
-  const resolvedParams = await params;
-  const { slug } = resolvedParams;
-  const verrier = await getVerrier(slug);
+export default async function VerrierPage({ params }: { params: any }) {
+  // Et on accède directement à .slug, sans await
+  const verrier = await getVerrier(params.slug);
 
   if (!verrier) {
     notFound();
