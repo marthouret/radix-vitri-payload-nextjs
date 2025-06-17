@@ -3,6 +3,8 @@ import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Catalogue des Verreries | Radix Vitri',
   // description: 'Liste de toutes les verreries documentées sur Radix Vitri.' // Optionnel

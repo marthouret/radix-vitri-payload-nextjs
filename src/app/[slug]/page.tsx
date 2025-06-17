@@ -5,6 +5,8 @@ import type { Metadata } from 'next';
 import type { Page } from '@/payload-types';
 import ArticleContentRenderer from '@/components/ArticleContentRenderer'; // Votre composant pour le RichText
 
+export const dynamic = 'force-dynamic';
+
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
 // --- Fonction pour récupérer les données de la page ---

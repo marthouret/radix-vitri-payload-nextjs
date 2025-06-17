@@ -6,6 +6,8 @@ import ArticleContentRenderer from '@/components/ArticleContentRenderer';
 // Importer les options partagées
 import { rolePrincipalOptions } from '@/config/selectOptions'; 
 
+export const dynamic = 'force-dynamic';
+
 // --- Définitions des Interfaces ---
 
 // Interface LieuType (déjà définie pour VerrierPage, plus tard : à centraliser)

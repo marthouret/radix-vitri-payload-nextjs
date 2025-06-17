@@ -8,8 +8,7 @@ import SearchVerriers from '@/components/SearchVerriers';
 import HistoireCard from '@/components/HistoireCard';
 import { VerrerieMapPoint } from '@/types/verrerie';
 
-// ArticleContentRenderer n'est plus utilisé sur CETTE page si on simplifie les résumés
-// import ArticleContentRenderer from '@/components/ArticleContentRenderer';
+export const dynamic = 'force-dynamic';
 
 // --- Composants de Section ---
 const HeroSection = () => {
@@ -64,7 +63,7 @@ const HeroSection = () => {
 async function getVerreriesForMap(): Promise<VerrerieMapPoint[]> { // VerrerieMapPoint est l'interface attendue par votre ClientWrapper
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/verreries?limit=300&depth=1&where[lieuPrincipal.coordonnees][exists]=true`;
-    const response = await fetch(apiUrl, { cache: 'no-store' });
+    const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
     if (!response.ok) {
       console.error(`[getVerreriesForMap] Erreur API (${response.status}): ${await response.text()}`);
       return [];

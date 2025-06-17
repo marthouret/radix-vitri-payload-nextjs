@@ -4,6 +4,8 @@ import type { Verrier as VerrierType, Engagement as EngagementType, FonctionsVer
 import PersonneCard from '@/components/PersonneCard'; // On utilise notre composant réutilisable !
 import { formatPeriode } from '@/utils/formatters'; // On importe notre fonction de formatage de date
 
+export const dynamic = 'force-dynamic';
+
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
 // On dit à TypeScript que nos objets Verrier auront bien un champ 'engagements'

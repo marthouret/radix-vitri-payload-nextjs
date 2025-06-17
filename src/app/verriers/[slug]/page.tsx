@@ -9,6 +9,8 @@ import { MapPoint, type EngagementDetailForPopup } from '@/types/map';
 import ArticleContentRenderer from '@/components/ArticleContentRenderer'; 
 import { formatPeriode, type DateDebut, type DateFin } from '@/utils/formatters';
 
+export const dynamic = 'force-dynamic';
+
 // --- Définitions des Interfaces ---
 interface EvenementBiographiqueFromAPI {
   id: string | number;

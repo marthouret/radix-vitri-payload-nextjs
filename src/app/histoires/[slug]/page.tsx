@@ -1,5 +1,4 @@
 // src/app/histoires/[slug]/page.tsx
-
 import React from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -8,6 +7,8 @@ import type { Histoire as HistoireType, Verrier as VerrierType, Verrery as Verre
 import ArticleContentRenderer from '@/components/ArticleContentRenderer';
 import MapLoader from '@/components/MapLoader';
 import type { MapPoint } from '@/types/map';
+
+export const dynamic = 'force-dynamic';
 
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 

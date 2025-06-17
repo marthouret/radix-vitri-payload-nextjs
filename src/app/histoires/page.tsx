@@ -1,9 +1,10 @@
 // src/app/histoires/page.tsx
-
 import React from 'react';
 import type { Metadata } from 'next';
 import type { Histoire as HistoireType } from '@/payload-types';
 import HistoireCard from '@/components/HistoireCard';
+
+export const dynamic = 'force-dynamic';
 
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 

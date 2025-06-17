@@ -8,7 +8,7 @@ async function getFooterPages(): Promise<Page[]> {
   try {
     const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
     // On récupère toutes les pages, avec tous leurs champs peuplés (impossible de récupérer seulement les champs title et slug)
-    const response = await fetch(`${payloadUrl}/api/pages?limit=10&depth=0`, { cache: 'no-store' });
+    const response = await fetch(`${payloadUrl}/api/pages?limit=10&depth=0`, { cache: 'force-cache' });
     if (!response.ok) {
         console.error(`[getFooterPages] Erreur API (${response.status}): ${await response.text()}`);
         return [];

@@ -13,6 +13,8 @@ import GalerieVerrerie from '@/components/GalerieVerrerie';
 import { statutVerrerieOptions } from '@/config/selectOptions';
 import { formatPeriode, type DateDebut, type DateFin } from '@/utils/formatters';
 
+export const dynamic = 'force-dynamic';
+
 // --- Définitions des Interfaces ---
 // Sous-types pour VerrerieType
 interface NomHistoriqueOuSocial {
@@ -270,12 +272,12 @@ const SuggestionCard: React.FC<{ verrerie: VerrerieType }> = ({ verrerie }) => {
 
 // --- Fonction de Récupération des Données ---
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-async function fetchFullRelatedDoc(collectionSlug: string, id: string | number): Promise<any | null> { try { const apiUrl = `${payloadUrl}/api/${collectionSlug}/${id}?depth=0&locale=fr&fallback-locale=fr`; const response = await fetch(apiUrl, { cache: 'no-store' }); if (!response.ok) { console.error(`[fetchRelatedDoc] Erreur API pour ${collectionSlug} ID ${id} (${response.status}): ${await response.text()}`); return null; } return await response.json(); } catch (error) { console.error(`[fetchRelatedDoc] Exception pour ${collectionSlug} ID ${id}:`, error); return null; } }
+async function fetchFullRelatedDoc(collectionSlug: string, id: string | number): Promise<any | null> { try { const apiUrl = `${payloadUrl}/api/${collectionSlug}/${id}?depth=0&locale=fr&fallback-locale=fr`; const response = await fetch(apiUrl, { next: { revalidate: 3600 } }); if (!response.ok) { console.error(`[fetchRelatedDoc] Erreur API pour ${collectionSlug} ID ${id} (${response.status}): ${await response.text()}`); return null; } return await response.json(); } catch (error) { console.error(`[fetchRelatedDoc] Exception pour ${collectionSlug} ID ${id}:`, error); return null; } }
 
 async function getVerrerie(slug: string): Promise<VerrerieType | null> { 
   try { 
     const verrerieUrl = `${payloadUrl}/api/verreries?where[slug][equals]=${slug}&depth=1&locale=fr&fallback-locale=fr&limit=1`;
-    const verrerieResponse = await fetch(verrerieUrl, { cache: 'no-store' });
+    const verrerieResponse = await fetch(verrerieUrl, { next: { revalidate: 3600 } });
 
     if (!verrerieResponse.ok) {
       console.error(`Erreur API Payload (${verrerieResponse.status}): ${await verrerieResponse.text()}`);
@@ -294,7 +296,7 @@ async function getVerrerie(slug: string): Promise<VerrerieType | null> {
     // On va chercher dans la collection 'engagements' tous ceux dont le champ 'verrerie' est l'ID de notre verrerie.
     // Assurez-vous que dans votre collection 'Engagements', le champ de relation vers une verrerie s'appelle bien 'verrerie'.
     const engagementsUrl = `${payloadUrl}/api/engagements?where[verrerie][equals]=${verrerie.id}&depth=2&limit=100`;
-    const engagementsResponse = await fetch(engagementsUrl, { cache: 'no-store' });
+    const engagementsResponse = await fetch(engagementsUrl, { next: { revalidate: 3600 } });
 
     if (engagementsResponse.ok) {
       const engagementsData = await engagementsResponse.json();
@@ -511,7 +513,7 @@ export default async function VerreriePage({ params }: { params: any }) {
   suggestionsApiUrl.searchParams.append('depth', '1');
 
   try {
-    const suggestionsResponse = await fetch(suggestionsApiUrl.toString(), { cache: 'no-store' });
+    const suggestionsResponse = await fetch(suggestionsApiUrl.toString(), { next: { revalidate: 3600 } });
     if (suggestionsResponse.ok) {
       const suggestionsData = await suggestionsResponse.json();
       if (suggestionsData.docs && suggestionsData.docs.length > 0) {
