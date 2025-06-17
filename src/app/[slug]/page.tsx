@@ -24,8 +24,7 @@ async function getPage(slug: string): Promise<Page | null> {
 
 // --- Fonction pour générer les métadonnées (titre de l'onglet) ---
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const resolvedParams = await params;
-  const page = await getPage(resolvedParams.slug);
+  const page = await getPage(params.slug);
     // Si la page n'est pas trouvée, on retourne un titre générique
   if (!page) {
     return { title: 'Page non trouvée' }
@@ -37,8 +36,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 // --- Le composant de la page ---
 export default async function PageTemplate({ params }: { params: { slug: string } }) {
-  const resolvedParams = await params;
-  const page = await getPage(resolvedParams.slug);
+  const page = await getPage(params.slug);
 
   // Si la page n'est pas trouvée dans Payload, on affiche une page 404
   if (!page) {

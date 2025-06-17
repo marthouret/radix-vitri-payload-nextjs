@@ -2,10 +2,6 @@ import { NextResponse } from 'next/server';
 import type { Endpoint, PayloadHandler } from 'payload';
 import type { Verrier, Engagement } from '@/payload-types';
 
-type VerrierAvecEngagements = Verrier & {
-  engagements: Engagement[];
-};
-
 const recherchePersonnesHandler: PayloadHandler = async (req) => {
   const { payload, query } = req;
   const searchTerm = query.q as string;
