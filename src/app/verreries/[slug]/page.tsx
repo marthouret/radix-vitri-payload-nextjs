@@ -1,10 +1,9 @@
 // Fichier : src/app/verreries/[slug]/page.tsx
 
 import React from 'react';
-import type { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image'; 
 import MapLoader from '@/components/MapLoader'; 
 import { MapPoint } from '@/types/map'; 
 import PersonneCard from '@/components/PersonneCard';

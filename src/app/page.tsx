@@ -40,10 +40,10 @@ const HeroSection = () => {
         <div className="prose prose-bluegray lg:prose-lg max-w-2xl mx-auto text-blueGray-700 font-sans mb-10 text-center sm:text-left md:pl-4 lg:pl-12">
           {/* J'ai remis text-center sur mobile et text-left à partir de sm pour les paragraphes */}
           <p>
-            Radix Vitri est un hommage à mes ancêtres verriers. Ce catalogue interactif vous invite à découvrir les nombreux établissements où, du XVIIe siècle à l&apos;aube de la Première Guerre Mondiale, ces artisans du verre – qu'ils soient souffleurs, composeurs, tamiseurs, graveurs ou peintres sur verre – exercèrent leurs précieux talents.
+            Radix Vitri est un hommage à mes ancêtres verriers. Ce catalogue interactif vous invite à découvrir les nombreux établissements où, du XVIIe siècle à l&apos;aube de la Première Guerre Mondiale, ces artisans du verre – qu&apos;ils soient souffleurs, composeurs, tamiseurs, graveurs ou peintres sur verre – exercèrent leurs précieux talents.
           </p>
           <p>
-            Explorez avec nous l&apos;évolution de ces lieux oubliés de savoir-faire : des verreries forestières éphémères, dévoreuses de bois, aux premières grandes manufactures prestigieuses, jusqu'à l&apos;essor de l&apos;industrie verrière transformée par le charbon puis la mécanisation.
+            Explorez avec nous l&apos;évolution de ces lieux oubliés de savoir-faire : des verreries forestières éphémères, dévoreuses de bois, aux premières grandes manufactures prestigieuses, jusqu&apos;à l&apos;essor de l&apos;industrie verrière transformée par le charbon puis la mécanisation.
           </p>
         </div>
         

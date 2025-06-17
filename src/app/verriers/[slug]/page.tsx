@@ -1,11 +1,10 @@
 // src/app/verriers/[slug]/page.tsx
-import type { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import React from 'react';
 import Link from 'next/link';
 import MapLoader from '@/components/MapLoader'; 
 import TimelineClient from '@/components/TimelineClient';
-
 import { MapPoint, type EngagementDetailForPopup } from '@/types/map';
 import ArticleContentRenderer from '@/components/ArticleContentRenderer'; 
 import { formatPeriode, type DateDebut, type DateFin } from '@/utils/formatters';
