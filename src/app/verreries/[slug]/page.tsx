@@ -213,11 +213,6 @@ const BackToTop = () => {
   );
 };
 
-interface GroupedListItemProps<T extends VerrierType> {
-  personne: T;
-  engagements: EngagementDetailPourListe[];
-}
-
 const getStatutLabel = (value?: string): string => {
   if (!value) return 'N/A';
   const option = statutVerrerieOptions.find(opt => opt.value === value);

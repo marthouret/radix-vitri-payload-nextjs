@@ -120,7 +120,7 @@ function transformerEngagementEnFriseItem(engagement: EngagementPourCarte): Fris
   } = engagement;
 
   const _idOriginal = id;
-  const _type: 'engagement' = 'engagement';
+  const _type = 'engagement' as const;
   const anneeTri = dateDebutStructurée?.anneeDebutSort || 1;
   const moisTri = dateDebutStructurée?.moisDebutSort ? dateDebutStructurée.moisDebutSort - 1 : 0;
   const _datePourTri = new Date(anneeTri, moisTri, 1);
