@@ -100,7 +100,7 @@ return engagements
     <div className="bg-cream min-h-screen">
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold font-serif mb-10 text-center">
-          Résultats de la recherche pour : <span className="text-gold">"{query}"</span>
+          Résultats de la recherche pour : <span className="text-gold">&quot;{query}&quot;</span>
         </h1>
 
         {personnesTrouvees.length === 0 ? (

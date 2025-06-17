@@ -2,19 +2,11 @@
 
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { JSX } from 'react/jsx-runtime';
-import Link from 'next/link'; 
 import ArticleContentRenderer from '@/components/ArticleContentRenderer'; 
 // Importer les options partagées
 import { rolePrincipalOptions } from '@/config/selectOptions'; 
 
 // --- Définitions des Interfaces ---
-interface MediaItem { 
-  id: string; 
-  url?: string; 
-  filename?: string; 
-  alt?: string; 
-}
 
 // Interface LieuType (déjà définie pour VerrierPage, plus tard : à centraliser)
 interface LieuType {
@@ -72,7 +64,7 @@ const formatDateForDisplay = (dateString?: string | null): string => {
     }
     // Pour un affichage plus lisible (ex: 12 mars 1850)
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-  } catch (e) {
+  } catch (_e) {
     return dateString; // Fallback
   }
 };

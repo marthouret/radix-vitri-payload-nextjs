@@ -2,10 +2,9 @@
 'use client';
 import Link from 'next/link';
 import { Combobox } from '@headlessui/react';
-import React, { useState, useMemo, useEffect, useCallback, Fragment } from 'react';
+import React, { useState, useMemo, useEffect, Fragment } from 'react';
 import MapLoader from '@/components/MapLoader';
-import { MapPoint } from '@/types/map';
-import { VerrerieMapPoint, NomHistoriqueItem } from '@/types/verrerie';
+import { VerrerieMapPoint } from '@/types/verrerie';
   
 interface MapAndFiltersClientWrapperProps {
   initialVerreries: VerrerieMapPoint[];

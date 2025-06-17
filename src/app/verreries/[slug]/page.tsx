@@ -50,9 +50,9 @@ interface PeriodeVerriereData { // Nouvelle interface pour l'objet periodeVerrie
 }
 
 interface MediaItem { id: string; url?: string; filename?: string; alt?: string; width?: number; height?: number; mimeType?: string; caption?: string; }
-interface DateGroup { datePreciseCreation?: string | null; descriptionDateCreation?: string | null; datePreciseFermeture?: string | null; descriptionDateFermeture?: string | null;}
+// interface DateGroup { datePreciseCreation?: string | null; descriptionDateCreation?: string | null; datePreciseFermeture?: string | null; descriptionDateFermeture?: string | null;}
 interface SourceBibliographique { id?: string; typeSource?: string; titre?: string; auteur?: string; url?: string; detailsPublication?: string; citationOuExtrait?: string; notesSource?: string; }
-interface NomAlternatif { id?: string; typeDeNom?: string; nom?: string; }
+// interface NomAlternatif { id?: string; typeDeNom?: string; nom?: string; }
 
 interface VerrierType {
   id: string | number;
@@ -173,24 +173,10 @@ export interface VerrerieType {
 interface VerreriePageProps { params: { slug: string; }; }
 
 // --- Fonctions Utilitaires ---
-const formatDate = (dateString?: string | null): string | null => { if (!dateString) return null; try { const date = new Date(dateString); if (isNaN(date.getTime())) { const yearMatch = dateString.match(/\d{4}/); if (yearMatch) return yearMatch[0]; return dateString; } return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`; } catch (_e) { return dateString; } };
-const displayDateGroup = (datePrecise?: string | null, descriptionDate?: string | null): string => { const formattedPreciseDate = formatDate(datePrecise); if (formattedPreciseDate && datePrecise && !isNaN(new Date(datePrecise).getTime())) { return formattedPreciseDate; } if (descriptionDate) { return descriptionDate; } return 'N/A';};
+// const displayDateGroup = (datePrecise?: string | null, descriptionDate?: string | null): string => { const formattedPreciseDate = formatDate(datePrecise); if (formattedPreciseDate && datePrecise && !isNaN(new Date(datePrecise).getTime())) { return formattedPreciseDate; } if (descriptionDate) { return descriptionDate; } return 'N/A';};
 
 // --- Composants de Rendu Spécifiques ---
 // const ArticleContentRenderer: React.FC<{ content: any }> = ({ content }) => { if (!content || !content.root || !content.root.children) { return <p className="italic text-blueGray-500">Contenu non disponible.</p>; } const renderNodes = (nodes: any[], parentKey: string = 'node'): (JSX.Element | string)[] => { return nodes.map((node, index) => { const key = `${parentKey}-${node.type || 'unknown'}-${index}-${node.format || ''}-${Math.random().toString(36).substr(2, 5)}`; if (node.type === 'paragraph') { return <p key={key} className="mb-4 last:mb-0">{renderNodes(node.children || [], key)}</p>; } if (node.type === 'heading') { const Tag = node.tag as keyof JSX.IntrinsicElements; return <Tag key={key}>{renderNodes(node.children || [], key)}</Tag>; } if (node.type === 'list') { const ListTag = node.tag === 'ol' ? 'ol' : 'ul'; return <ListTag key={key} className={ListTag === 'ol' ? 'list-decimal pl-5 mb-4' : 'list-disc pl-5 mb-4'}>{renderNodes(node.children || [], key)}</ListTag>; } if (node.type === 'listitem') { return <li key={key} className="mb-1">{renderNodes(node.children || [], key)}</li>; } if (node.type === 'link') { const linkType = node.fields?.linkType; const doc = node.fields?.doc; const url = node.fields?.url; const newTab = node.fields?.newTab; const childrenContent = renderNodes(node.children || [], key); if (linkType === 'internal' && doc?.value && typeof doc.value === 'object' && doc.value !== null && doc.value.slug) { const href = `/${doc.relationTo}/${doc.value.slug}`; return <Link key={key} href={href} target={newTab ? '_blank' : undefined} rel={newTab ? 'noopener noreferrer' : undefined} className="text-gold hover:text-gold-dark underline">{childrenContent}</Link>; } else if (linkType === 'custom' && url) { return <a key={key} href={url} target={newTab ? '_blank' : undefined} rel={newTab ? 'noopener noreferrer' : undefined} className="text-gold hover:text-gold-dark underline">{childrenContent}</a>; } return <React.Fragment key={key}>{childrenContent}</React.Fragment>; } if (node.type === 'text') { let textElement: JSX.Element | string = <React.Fragment key={`text-${key}`}>{node.text}</React.Fragment>; if (node.format === 1) textElement = <strong key={`strong-${key}`}>{textElement}</strong>; if (node.format === 2) textElement = <em key={`em-${key}`}>{textElement}</em>; if (node.format === 8) textElement = <code key={`code-${key}`}>{textElement}</code>; return textElement; } if (node.type === 'linebreak') { return <br key={key} />; } return node.text || ''; }).filter(item => item !== null && item !== ''); }; return <>{renderNodes(content.root.children, 'root')}</>; };
-const InlineDocument: React.FC<{ src?: string; caption?: string; altText?: string }> = ({ src, caption, altText }) => {
-  if (!src) return null;
-  const payloadBaseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-  const imageUrl = `${payloadBaseUrl}${src}`;
-  return (
-    <figure className="my-8 clear-both overflow-hidden rounded-lg border border-blueGray-200 bg-white shadow-md max-w-xl mx-auto">
-      <div className="relative w-full aspect-[4/3]">
-        <Image src={imageUrl} alt={altText || caption || "Document historique"} fill className="object-contain max-h-[600px]" sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" />
-      </div>
-      {caption && <figcaption className="mt-2 text-sm text-blueGray-600 italic px-3 py-2 bg-blueGray-50 text-center font-sans">{caption}</figcaption>}
-    </figure>
-  );
-};
 
 // Composant de menu de navigation pour la page, positionné dans la colonne de droite
 // Composant de navigation avec police agrandie
@@ -240,51 +226,6 @@ const getStatutLabel = (value?: string): string => {
 };
 
 // PersonalityListItem (pour affichage en liste simple dans la colonne principale)
-const PersonalityListItem: React.FC<GroupedListItemProps<VerrierType>> = ({ personne, engagements }) => {
-  let nomCompletAffichage = personne.nomComplet || `${personne.prenom || ''} ${personne.nom || ''}`.trim() || 'Personnalité Inconnue';
-  const anneeN = personne.anneeNaissance;
-  const anneeD = personne.anneeDeces;
-  const accordE = personne.sexe === 'F' ? 'e' : ''; // 'e' pour le féminin, chaîne vide sinon
-
-  if (anneeN && anneeD) {
-    nomCompletAffichage = `${nomCompletAffichage} (${anneeN} - ${anneeD})`;
-  } else if (anneeN) {
-    nomCompletAffichage = `${nomCompletAffichage} (Né${accordE} en ${anneeN})`; 
-  } else if (anneeD) {
-    nomCompletAffichage = `${nomCompletAffichage} (Décédé${accordE} en ${anneeD})`;
-  }
-  return (
-    // Gardez les classes de ce div comme dans la version que vous trouviez la plus acceptable visuellement
-    // Le 'border-b border-blueGray-100 last:border-b-0' est le trait fin.
-    <div className="flex items-center space-x-3 py-2 border-b border-blueGray-100 last:border-b-0">
-      {/* Gardez votre icône et son conteneur comme vous les aviez */}
-      <div className="w-8 h-8 rounded-full bg-blueGray-200 border border-gold flex items-center justify-center shrink-0">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-blueGray-400 group-hover:text-gold transition-colors">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-        </svg>
-      </div>
-      <div className="flex flex-wrap items-baseline gap-x-1.5 min-w-0">
-        <h4 className="font-semibold text-blueGray-700 font-serif leading-tight whitespace-nowrap">
-          <Link
-            href={personne.slug ? `/verriers/${personne.slug}` : '#'}
-            className="text-gold hover:text-gold-dark text-m no-underline hover:underline decoration-gold hover:decoration-gold-dark transition-colors"
-          >
-            {nomCompletAffichage}
-          </Link>
-        </h4>
-        <div className="mt-1 space-y-0.5">
-          {engagements.map(eng => (
-            <div key={eng.engagementId} className="text-xs text-blueGray-600 font-sans">
-              {eng.fonction && <span className="text-blueGray-700 font-semibold">{eng.fonction}</span>}
-              {eng.fonction && eng.periode && <span className="text-blueGray-400">, </span>}
-              {eng.periode && <span className="text-blueGray-500">{eng.periode}</span>}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Composant pour afficher une carte de suggestion de verrerie
 // C'est une liste de verreries, avec un lien vers la page de détails
@@ -333,64 +274,6 @@ const SuggestionCard: React.FC<{ verrerie: VerrerieType }> = ({ verrerie }) => {
   );
 };
 
-const VerrierListItem: React.FC<GroupedListItemProps<VerrierType>> = ({ personne, engagements }) => {
-  let nomCompletAffichage = personne.nomComplet || `${personne.prenom || ''} ${personne.nom || ''}`.trim() || 'Verrier Inconnu';
-  const anneeN = personne.anneeNaissance;
-  const anneeD = personne.anneeDeces;
-  const accordE = personne.sexe === 'F' ? 'e' : '';
-
-  if (anneeN && anneeD) {
-    nomCompletAffichage = `${nomCompletAffichage} (${anneeN} - ${anneeD})`;
-  } else if (anneeN) {
-    nomCompletAffichage = `${nomCompletAffichage} (Né${accordE} en ${anneeN})`; 
-  } else if (anneeD) {
-    nomCompletAffichage = `${nomCompletAffichage} (Décédé${accordE} en ${anneeD})`;
-  }
-
-  return (
-    <div className="py-2 border-b border-blueGray-100 last:border-b-0 group">
-      {/* Conteneur Flex principal pour l'icône et TOUT le contenu textuel à sa droite */}
-      <div className="flex items-start space-x-3"> {/* Utiliser items-start pour aligner le haut de l'icône avec le haut du bloc de texte */}
-        
-        {/* Icône */}
-        <div className="flex-shrink-0 pt-0"> {/* pt-0.5 ou pt-1 pour un léger ajustement vers le bas de l'icône afin de l'aligner avec la première ligne de texte */}
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            strokeWidth="1.5" 
-            stroke="currentColor" 
-            className="w-5 h-5 text-gold group-hover:text-gold-dark transition-colors"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2 22h20M4 22V10l4-3 4 3 4-3 4 3v12M8 16h2m4 0h2M8 12h2m4 0h2M18 9V6h-2v3" />
-          </svg>
-        </div>
-
-        {/* Bloc de texte principal (Nom + liste des engagements) */}
-        <div className="flex flex-col min-w-0 flex-grow"> {/* Ce div est en colonne pour Nom PUIS Engagements */}
-          <h4 className="font-semibold text-blueGray-700 font-serif leading-tight whitespace-nowrap my-0"> {/* Pas de mb-1 ici, l'espace sera après */}
-            <Link href={personne.slug ? `/verriers/${personne.slug}` : '#'} className="text-gold hover:text-gold-dark no-underline hover:underline decoration-gold hover:decoration-gold-dark transition-colors">
-              {nomCompletAffichage}
-            </Link>
-          </h4>
-
-          {/* Liste des engagements, seulement si engagements existe et a des items */}
-          {engagements && engagements.length > 0 && (
-            <div className="space-y-0.5"> {/* si nécessaire : mt-1 pour espacer ce bloc du nom */}
-              {engagements.map(eng => (
-                <div key={eng.engagementId} className="text-xs text-blueGray-600 font-sans">
-                  {eng.fonction && <span className="text-blueGray-700 font-semibold">{eng.fonction}</span>}
-                  {eng.fonction && eng.periode && <span className="text-blueGray-400">, </span>}
-                  {eng.periode && <span className="text-blueGray-500">{eng.periode}</span>}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // --- Fonction de Récupération des Données ---
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
@@ -450,9 +333,7 @@ type Props = {
 };
 
 export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata // Permet d'accéder aux métadonnées du parent
-): Promise<Metadata> {
+  { params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const verrerie = await getVerrerie(slug); // Récupérer les données pour le titre
 

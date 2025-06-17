@@ -1,6 +1,4 @@
 // src/app/layout.tsx
-import Link from 'next/link';
-import Image from 'next/image';
 import type { Metadata } from 'next';
 import { Playfair_Display, Lato, Limelight } from 'next/font/google';
 import './globals.css'; 

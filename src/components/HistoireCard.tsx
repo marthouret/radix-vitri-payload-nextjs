@@ -43,7 +43,7 @@ const HistoireCard = ({ histoire }: { histoire: HistoirePourCarte }) => {
           </p>
         )}
         <span className="inline-block mt-auto text-gold group-hover:text-gold-dark font-semibold font-sans self-start">
-          Lire l'histoire &rarr;
+          Lire l&apos;histoire &rarr;
         </span>
       </div>
     </Link>

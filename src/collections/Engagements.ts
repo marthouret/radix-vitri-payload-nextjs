@@ -19,7 +19,7 @@ const Engagements: CollectionConfig = {
       async ({ data, req }) => {
         let personneNom = '';
         let verrerieNom = '';
-        let fonctionNom = '';
+        const fonctionNom = '';
 
         // Récupération du nom du verrier (inchangé)
         if (data.personneConcernee) {

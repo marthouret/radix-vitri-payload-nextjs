@@ -6,9 +6,8 @@ import Link from 'next/link';
 import MapLoader from '@/components/MapLoader'; 
 import TimelineClient from '@/components/TimelineClient';
 
-import { MapPoint, type MapPointPopupDetails, type EngagementDetailForPopup } from '@/types/map';
+import { MapPoint, type EngagementDetailForPopup } from '@/types/map';
 import ArticleContentRenderer from '@/components/ArticleContentRenderer'; 
-import EvenementsBiographiques from '@/collections/EvenementsBiographiques';
 import { formatPeriode, type DateDebut, type DateFin } from '@/utils/formatters';
 
 // --- Définitions des Interfaces ---
@@ -79,13 +78,6 @@ interface EngagementPourCarte {
   descriptionEngagement: string;
 }
 
-interface ChronoMedia { // Définition de ChronoMedia
-  type: 'IMAGE' | 'VIDEO';
-  source: {
-    url: string;
-  };
-  name?: string;
-}
 
 interface FriseItem { // Définition de FriseItem
   title?: string;
@@ -119,36 +111,13 @@ interface VerrierPageProps {
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
 // --- Fonctions Utilitaires ---
-const formatDateForDisplay = (dateString?: string | null): string => {
-  // ... (votre code existant pour formatDateForDisplay)
-  if (!dateString) return 'Date inconnue';
-  if (isNaN(new Date(dateString).getTime()) && dateString.match(/\D/)) {
-    return dateString;
-  }
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      const yearMatch = dateString.match(/\d{4}/);
-      if (yearMatch) return yearMatch[0];
-      return dateString;
-    }
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-  } catch (_e) {
-    return dateString;
-  }
-};
 
-const displayLieu = (lieu: LieuType | string | undefined | null): React.ReactNode => {
-  if (!lieu) return <span className="italic">Non renseigné</span>;
-  if (typeof lieu === 'string') return <span className="italic">Lieu (ID: {lieu})</span>;
-  return <>{lieu.nomCompletAffichage || lieu.villeOuCommune || `ID: ${lieu.id}`}</>;
-};
 
 // Fonction de transformation
 function transformerEngagementEnFriseItem(engagement: EngagementPourCarte): FriseItem {
   const {
     id, verrerie, fonctionVerrier, fonctionPersonnalite, typeEngagement,
-    periodeActiviteTexte, dateDebutStructurée, dateFinStructurée, descriptionEngagement,
+    dateDebutStructurée, descriptionEngagement,
   } = engagement;
 
   const _idOriginal = id;
@@ -180,7 +149,7 @@ function transformerEngagementEnFriseItem(engagement: EngagementPourCarte): Fris
         imagesEtMedias?: Array<{ url?: string; alt?: string; filename?: string; }>;
     }
     const verrerieObj = verrerie as VerrerieAvecMediaPourFrise;
-    let nomVerrerie = verrerieObj.nomPrincipal || 'Verrerie non spécifiée';
+    const nomVerrerie = verrerieObj.nomPrincipal || 'Verrerie non spécifiée';
     let localisationVerrerie = '';
     if (verrerieObj.lieuPrincipal && typeof verrerieObj.lieuPrincipal === 'object') {
       const lieuSimplifie = verrerieObj.lieuPrincipal as LieuSimplifie;
@@ -431,9 +400,7 @@ type Props = {
 };
 
 export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata // Permet d'accéder aux métadonnées du parent
-): Promise<Metadata> {
+  { params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const verrier = await getVerrier(slug); // Récupérer les données pour le titre
 

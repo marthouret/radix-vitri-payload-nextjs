@@ -28,7 +28,7 @@ const recherchePersonnesHandler: PayloadHandler = async (req) => {
     const verrierIds = verriersQuery.docs.map(v => v.id);
 
     // 2. Trouver les engagements où personneConcernee est dans ces IDs
-    let personnesMap = new Map<string, Verrier>();
+    const personnesMap = new Map<string, Verrier>();
     let engagements: Engagement[] = [];
     if (verrierIds.length > 0) {
       const engagementsQuery = await payload.find({

@@ -65,7 +65,7 @@ export default async function HistoiresIndexPage() {
             Histoires & Récits
           </h1>
           <p className="mt-4 text-lg text-blueGray-600 font-sans max-w-3xl mx-auto">
-            Plongez dans les sagas qui ont façonné l'industrie du verre, des verreries forestières aux grandes manufactures.
+            Plongez dans les sagas qui ont façonné l&apos;industrie du verre, des verreries forestières aux grandes manufactures.
           </p>
         </header>
         
