@@ -6,6 +6,8 @@ import L, { LatLngExpression, Map as LeafletMap, LatLngBoundsLiteral } from 'lea
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'; // Ajout de useMap
 import Link from 'next/link'; // Pour les liens dans les popups
 
+import { MapPoint } from '@/types/map';
+
 console.log('[VerrerieMap] Script VerrerieMap.tsx est en cours d\'exécution (niveau module)');
 
 // Correction pour les icônes de marqueur par défaut
@@ -20,29 +22,22 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Interface pour chaque point sur la carte
-interface MapPoint {
-  id: string;
-  slug: string;
-  nomPrincipal: string;
-  coordonnees: [number, number]; // [longitude, latitude]
-  villeOuCommune?: string;
-}
-
 interface VerrerieMapProps {
   points: MapPoint[]; // Maintenant un tableau de points
   // center?: [number, number]; // Optionnel, on peut le calculer
   defaultZoomLevel?: number; // Zoom par défaut si un seul point ou si pas de fitBounds
   singlePointZoomLevel?: number; // Zoom spécifique pour quand il n'y a qu'un seul point
+  disableMapAnimation?: boolean;
 }
 
 interface FitBoundsToMarkersProps { // Pour le recentrage/zoom dynamique
   points: MapPoint[];
   singlePointZoomLevel: number; 
+  disableAnimation: boolean;
 }
 
 // Un petit composant pour ajuster les limites de la carte
-const FitBoundsToMarkers: React.FC<FitBoundsToMarkersProps> = ({ points, singlePointZoomLevel }) => {
+const FitBoundsToMarkers: React.FC<FitBoundsToMarkersProps> = ({ points, singlePointZoomLevel, disableAnimation }) => {
   const map = useMap();
   useEffect(() => {
     if (!map) return; // S'assurer que la carte est initialisée
@@ -50,43 +45,52 @@ const FitBoundsToMarkers: React.FC<FitBoundsToMarkersProps> = ({ points, singleP
       const [singlePoint] = points;
       // Leaflet attend [latitude, longitude]
       const latLng: LatLngExpression = [singlePoint.coordonnees[1], singlePoint.coordonnees[0]];
-      map.flyTo(latLng, singlePointZoomLevel, { duration: 2.5 }); // Utiliser flyTo et le zoom spécifique
+      if (disableAnimation) {
+        map.setView(latLng, singlePointZoomLevel); // Transition instantanée
+      } else {
+        map.flyTo(latLng, singlePointZoomLevel, { duration: 2.5 }); // Animation (durée ajustée)
+      }
     } else if (points && points.length > 1) {
       const boundsArray = points.map(point => [point.coordonnees[1], point.coordonnees[0]] as [number, number]);
       // Vérifier que boundsArray n'est pas vide avant d'appeler fitBounds
       if (boundsArray.length > 0) {
-        map.fitBounds(boundsArray as LatLngBoundsLiteral, { padding: [50, 50] });
+        map.fitBounds(boundsArray as LatLngBoundsLiteral, { padding: [50, 50], animate: !disableAnimation });
       }
     } else if (points && points.length === 0) {
         // Optionnel : si aucun point n'est sélectionné (après avoir été filtré),
         // revenir à une vue par défaut. MapLoader gère déjà un message,
         // mais si VerrerieMap est toujours rendu, il faut décider quoi afficher.
         // Par exemple, la vue initiale de la France.
-        map.flyTo([46.603354, 1.888334], 6, { duration: 2.5 }); // Zoom par défaut sur la France (valeur de defaultZoomLevel)
-    }
-  }, [points, map, singlePointZoomLevel]);
+        if (disableAnimation) {
+          map.setView([46.603354, 1.888334], 6);
+        } else {
+          map.flyTo([46.603354, 1.888334], 6, { duration: 0.5 }); // Vue par défaut (France)
+        }
+     }
+  }, [points, map, singlePointZoomLevel, disableAnimation]);
   return null;
 };
 
 const VerrerieMap: React.FC<VerrerieMapProps> = ({ 
   points, 
   defaultZoomLevel = 6, // Zoom pour la carte avec plusieurs points avant fitBounds
-  singlePointZoomLevel = 14 // Zoom spécifique pour quand il n'y a qu'un seul point
+  singlePointZoomLevel = 14, // Zoom spécifique pour quand il n'y a qu'un seul point
+  disableMapAnimation = false 
 }) => { 
   const mapRef = useRef<LeafletMap | null>(null);
 
   let initialCenter: LatLngExpression;
   let currentZoomLevel: number;
 
-  if (points && points.length === 1) {
-    initialCenter = [points[0].coordonnees[1], points[0].coordonnees[0]]; // Centre sur l'unique point
-    currentZoomLevel = singlePointZoomLevel; // Utilise le zoom pour un seul point
+  if (points && points.length === 1) {  // Cas où il n'y a qu'un seul point (localisation d'une verrerie par exemple).
+    initialCenter = [points[0].coordonnees[1], points[0].coordonnees[0]]; // Centre sur l'unique point.
+    currentZoomLevel = singlePointZoomLevel; // Utilise le niveau de zoom pour un seul point.
   } else {
-    initialCenter = [46.603354, 1.888334]; // Centre approximatif de la France (pour plusieurs points avant fitBounds)
+    initialCenter = [46.603354, 1.888334]; // Centre approximatif de la France (pour plusieurs points avant fitBounds).
     currentZoomLevel = defaultZoomLevel;
   }
 
-  if (!points || points.length === 0) {
+  if (!points || points.length === 0) { // Cas d'erreur où il n'y a aucun point.
     return <div className="p-4 text-orange-700 bg-orange-100 border border-orange-500 rounded">Aucun point à afficher sur la carte.</div>;
   }
 
@@ -115,15 +119,30 @@ const VerrerieMap: React.FC<VerrerieMapProps> = ({
       {points.map(point => (
         <Marker key={point.id} position={[point.coordonnees[1], point.coordonnees[0]] /* Leaflet: Lat, Lon */}>
           <Popup>
-            <Link href={`/verreries/${point.slug}`} className="font-semibold text-gold hover:underline">
+            {/* Liste des engagements à cet endroit */}
+            {point.popupDetails?.allEngagementsAtThisLocation && point.popupDetails.allEngagementsAtThisLocation?.map((engagementDetail, index, array) => (
+              <div key={index} className={index > 0 ? "border-t border-blueGray-200" : ""}> {/* Séparateur si plusieurs engagements */}
+                {engagementDetail.fonction && (
+                  <div className="text-sm text-blueGray-800 font-semibold">{engagementDetail.fonction}</div>
+                )}
+                {engagementDetail.periode && (
+                  <div className="text-sm text-blueGray-600">{engagementDetail.periode}</div>
+                )}
+                {/* Vous pouvez aussi afficher engagementDetail.typeEvenement si c'est pertinent ici */}
+                {index === array.length - 1 && (
+                  <hr className="my-2 border-blueGray-300" />
+                )}
+              </div>
+            ))}
+            <Link href={`/verreries/${point.slug}`} className="text-sm font-semibold text-gold hover:underline">
               {point.nomPrincipal}
             </Link>
-            {point.villeOuCommune && <div className="text-sm text-blueGray-600">{point.villeOuCommune}</div>}
+            {(point.nomDuLieu || point.villeOuCommune) && <div className="text-sm text-blueGray-600">{point.nomDuLieu || point.villeOuCommune}</div>}
           </Popup>
         </Marker>
       ))}
       {/* Ce composant ajustera la vue pour montrer tous les marqueurs */}
-      <FitBoundsToMarkers points={points} singlePointZoomLevel={singlePointZoomLevel} />
+      <FitBoundsToMarkers points={points} singlePointZoomLevel={singlePointZoomLevel} disableAnimation={disableMapAnimation} />
     </MapContainer>
   );
 };

@@ -11,15 +11,20 @@ import sharp from 'sharp'
 import { fr } from '@payloadcms/translations/languages/fr'; 
 import { en } from '@payloadcms/translations/languages/en';
 
-// Importer TOUTES vos collections
+// Import des collections et endpoints custom
 import { Users } from './collections/Users'
-import { Media } from './collections/Media' 
+import { Media } from './collections/Media'
+import { Pages } from './collections/Pages' 
 import Verrerie from './collections/Verrerie'
-import Personnalite from './collections/Personnalite'
 import Verrier from './collections/Verrier'
 import TypeDeProduction from './collections/TypeDeProduction'
 import Engagements from './collections/Engagements';
+import EvenementsBiographiques from './collections/EvenementsBiographiques';
 import Lieux from './collections/Lieu';
+import FonctionsVerriers from './collections/FonctionsVerriers';
+import FonctionsPersonnalites from './collections/FonctionsPersonnalites';
+import { Histoires } from './collections/Histoires';
+import { recherchePersonnesEndpoint } from './endpoints/RecherchePersonnes';
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -33,12 +38,21 @@ export default buildConfig({
   collections: [
     Users, 
     Media, 
+    Pages,
+    // Collections spécifiques
     Verrerie, 
-    Personnalite, 
-    Verrier, // La collection Verrier doit être ici
+    Verrier,
     TypeDeProduction,
     Engagements,
-    Lieux
+    EvenementsBiographiques,
+    Lieux,
+    FonctionsVerriers,
+    FonctionsPersonnalites,
+    Histoires,
+    // Ajoutez d'autres collections ici si nécessaire
+  ],
+  endpoints: [
+    recherchePersonnesEndpoint,
   ],
   
   localization: {

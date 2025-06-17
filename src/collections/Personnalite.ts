@@ -1,5 +1,6 @@
 // src/collections/Personnalite.ts
 import { CollectionConfig } from 'payload';
+import { createSimplifiedSlugHook } from '@/utils/payloadHooks';
 // Importer les options partagées
 import { rolePrincipalOptions } from '../config/selectOptions'; // Conservé
 
@@ -11,7 +12,8 @@ const Personnalite: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'nomComplet', // Conservé
-    defaultColumns: ['nomComplet', 'nom', 'prenom', 'rolePrincipal', 'updatedAt'], // Conservé
+    defaultColumns: ['nomComplet', 'nom', 'prenom', 'rolePrincipal', 'updatedAt'],
+    group: 'Verreries',
   },
   access: {
     read: () => true, // Conservé
@@ -54,6 +56,21 @@ const Personnalite: CollectionConfig = {
         ]
       }
     },
+    {
+      name: 'sexe',
+      label: 'Sexe',
+      type: 'select',
+      options: [
+        { label: 'Masculin', value: 'M' },
+        { label: 'Féminin', value: 'F' },
+        // { label: 'Non spécifié', value: 'X' },
+      ],
+      // required: false,
+      admin: {
+        description: 'Pour l\'accord grammatical.',
+        // width: '50%',
+      }
+    },
     { // slug - Conservé (y compris hook)
       name: 'slug',
       label: 'Slug (pour URL)',
@@ -63,22 +80,7 @@ const Personnalite: CollectionConfig = {
       index: true,
       hooks: {
         beforeValidate: [
-          async ({ value, data, originalDoc, operation }) => {
-            const slugify = (str: string): string => str.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
-            if (typeof value === 'string' && value.length > 0) return slugify(value);
-            let nameToSlugify = data?.nomComplet !== undefined ? data.nomComplet : originalDoc?.nomComplet;
-            if (!nameToSlugify) {
-              const prenomToUse = data?.prenom !== undefined ? data.prenom : originalDoc?.prenom;
-              const nomToUse = data?.nom !== undefined ? data.nom : originalDoc?.nom;
-              if (prenomToUse || nomToUse) {
-                nameToSlugify = `${prenomToUse || ''} ${nomToUse || ''}`.trim();
-              }
-            }
-            if (nameToSlugify && (operation === 'create' || (operation === 'update' && !originalDoc?.slug) )) {
-              return slugify(nameToSlugify);
-            }
-            return value;
-          },
+          createSimplifiedSlugHook()
         ],
       },
     },
@@ -98,16 +100,6 @@ const Personnalite: CollectionConfig = {
           label: 'Date de Naissance (texte)',
           admin: { width: '50%', description: 'Ex: "vers 1750", "le 12/03/1810"', }
         },
-        // --- CHAMP lieuDeNaissance MODIFIÉ ---
-        // Ancien champ texte (commenté pour suppression après migration) :
-        // {
-        //   name: 'lieuDeNaissance',
-        //   type: 'text',
-        //   label: 'Lieu de Naissance',
-        //   localized: false,
-        //   admin: { width: '50%', }
-        // },
-        // Nouveau champ relationship :
         {
           name: 'lieuDeNaissance',
           label: 'Lieu de Naissance',
@@ -131,16 +123,6 @@ const Personnalite: CollectionConfig = {
           label: 'Date de Décès (texte)',
           admin: { width: '50%', description: 'Ex: "vers 1820", "le 01/10/1880"', }
         },
-        // --- CHAMP lieuDeDeces MODIFIÉ ---
-        // Ancien champ texte (commenté pour suppression après migration) :
-        // {
-        //   name: 'lieuDeDeces',
-        //   type: 'text',
-        //   label: 'Lieu de Décès',
-        //   localized: false,
-        //   admin: { width: '50%', }
-        // },
-        // Nouveau champ relationship :
         {
           name: 'lieuDeDeces',
           label: 'Lieu de Décès',
@@ -154,6 +136,24 @@ const Personnalite: CollectionConfig = {
           }
         },
       ]
+    },
+    {
+      name: 'anneeNaissance',
+      label: 'Année de Naissance (pour affichage/tri)',
+      type: 'number',
+      admin: {
+        description: 'Année seulement, ex: 1820.',
+        width: '50%'
+      }
+    },
+    {
+      name: 'anneeDeces',
+      label: 'Année de Décès (pour affichage/tri)',
+      type: 'number',
+      admin: {
+        description: 'Année seulement, ex: 1890.',
+        width: '50%'
+      }
     },
     { // biographie - Conservé
       name: 'biographie',

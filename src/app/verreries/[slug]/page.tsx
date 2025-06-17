@@ -1,43 +1,112 @@
 // Fichier : src/app/verreries/[slug]/page.tsx
 
 import React from 'react';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image'; 
 import MapLoader from '@/components/MapLoader'; 
+import { MapPoint } from '@/types/map'; 
+import PersonneCard from '@/components/PersonneCard';
 import ArticleContentRenderer from '@/components/ArticleContentRenderer';
+import TruncatedText from '@/components/TruncatedText';
+import GalerieVerrerie from '@/components/GalerieVerrerie';
+import { statutVerrerieOptions } from '@/config/selectOptions';
+import { formatPeriode, type DateDebut, type DateFin } from '@/utils/formatters';
 
 // --- Définitions des Interfaces ---
+// Sous-types pour VerrerieType
+interface NomHistoriqueOuSocial {
+  id?: string; // ID généré par Payload pour chaque item de l'array
+  nom: string;
+  typeDeNom?: 'usage' | 'raison_sociale' | 'fondation' | 'populaire' | 'autre';
+  periodeValidite?: string;
+  anneeDebut?: number;
+  anneeFin?: number;
+  notes?: string;
+}
+
+interface DateStructuree { // Pour les dates de début/fin détaillées
+  anneeSort?: number;
+  moisSort?: number;
+  // jourSort?: number; // Omis comme discuté pour les engagements, à voir si pertinent pour verrerie
+  typePrecisionDate?: 'MoisAnneeExacts' | 'AnneeSeuleExacte' | 'CircaAnnee' | string; // string pour flexibilité
+}
+
+interface PeriodeVerriereData { // Nouvelle interface pour l'objet periodeVerriere
+  periodeActiviteTexte?: string;
+  anneeFondationApprox?: number;
+  anneeFermetureApprox?: number;
+  // Si les dates structurées sont directement ici (ce que votre JSON suggère) :
+  anneeDebutSort?: number;
+  moisDebutSort?: number | null; // Peut être null
+  typePrecisionDateDebut?: string;
+  anneeFinSort?: number;
+  moisFinSort?: number | null; // Peut être null
+  typePrecisionDateFin?: string;
+  // Si vous aviez gardé les sous-groupes "dateDebutDetaillee" et "dateFinDetaillee" DANS "periodeVerriere":
+  // dateDebutDetaillee?: DateStructuree; 
+  // dateFinDetaillee?: DateStructuree;
+}
+
 interface MediaItem { id: string; url?: string; filename?: string; alt?: string; width?: number; height?: number; mimeType?: string; caption?: string; }
 interface DateGroup { datePreciseCreation?: string | null; descriptionDateCreation?: string | null; datePreciseFermeture?: string | null; descriptionDateFermeture?: string | null;}
 interface SourceBibliographique { id?: string; typeSource?: string; titre?: string; auteur?: string; url?: string; detailsPublication?: string; citationOuExtrait?: string; notesSource?: string; }
 interface NomAlternatif { id?: string; typeDeNom?: string; nom?: string; }
 
-interface PersonnaliteType {
-  id: string | number;
-  nom?: string; 
-  prenom?: string;
-  nomComplet?: string; 
-  slug?: string; 
-}
-
 interface VerrierType {
   id: string | number;
   nom?: string; 
   prenom?: string;
-  nomComplet?: string; 
+  nomComplet?: string;
+  sexe?: 'M' | 'F';
   slug?: string;
+  anneeNaissance?: number;
+  anneeDeces?: number;
+}
+
+interface Fonction {
+  id: string;
+  nom: string;
+  // ... autres champs de la collection Fonction si besoin
+}
+
+// Interface pour les détails d'un engagement à afficher dans la liste groupée
+interface EngagementDetailPourListe {
+  engagementId: string;
+  fonction?: string;
+  periode: string;
+  // Champs pour le tri chronologique des engagements d'une même personne
+  anneeDebutSort?: number;
+  moisDebutSort?: number;
+}
+
+// Interface pour une personne (Personnalité ou Verrier) avec ses engagements groupés
+interface PersonneAvecEngagements<T extends VerrierType> {
+  personne: T;
+  engagementsDetails: EngagementDetailPourListe[];
 }
 
 interface EngagementType {
   id: string;
   personneConcernee?: { 
-    relationTo: 'personnalites' | 'verriers';
-    value: PersonnaliteType | VerrierType; 
+    relationTo: 'verriers';
+    value: VerrierType | string; // string si non peuplé
   };
   typeEngagement?: 'role_personnalite' | 'metier_verrier';
-  fonctionOuMetier?: string; 
+  fonctionPersonnalite?: Fonction | string; // string si non peuplé
+  fonctionVerrier?: Fonction | string; 
   periodeActiviteTexte?: string; 
+  dateDebutStructurée?: {
+    anneeDebutSort?: number;
+    moisDebutSort?: number;
+    typePrecisionDateDebut?: string;
+  };
+  dateFinStructurée?: {
+    anneeFinSort?: number;
+    moisFinSort?: number;
+    typePrecisionDateFin?: string;
+  };
 }
 
 // Interface pour Lieu (basée sur nouvelle collection Lieu.ts)
@@ -55,31 +124,51 @@ interface LieuType {
   notesHistoriquesSurLeLieu?: any; // Type RichText
 }
 
-// AJOUT/VÉRIFICATION : Interface pour les points de la carte (doit correspondre à celle utilisée par MapLoader/VerrerieMap)
-interface MapPoint {
+// Interface principale pour VerrerieType
+export interface VerrerieType {
   id: string;
-  slug: string;
   nomPrincipal: string;
-  coordonnees: [number, number]; // [longitude, latitude]
-  villeOuCommune?: string;
-}
-
-interface VerrerieType {
-  id: string; 
-  nomPrincipal: string; 
-  slug: string; 
-  nomsAlternatifs?: NomAlternatif[]; 
+  slug: string;
+  
+  // Anciens champs de date de création/fermeture (à supprimer après migration)
   dateDeCreation?: { datePreciseCreation?: string | null; descriptionDateCreation?: string | null; }; 
   dateDeFermeture?: { datePreciseFermeture?: string | null; descriptionDateFermeture?: string | null; };
-  statutActuel?: string; 
-  notesStatutVestiges?: string; adresse?: string; ville?: string; coordonnees?: [number, number]; 
-  lieuPrincipal?: LieuType | string;
-  imagesEtMedias?: MediaItem[]; 
-  sourcesBibliographiques?: SourceBibliographique[]; 
-  fondateurs?: (PersonnaliteType | string | number)[]; 
-  typesDeProduction?: Array<{ id: string; nom?: string; slug?: string }>; 
-  engagements?: EngagementType[]; 
-  histoire?: any; techniquesInnovations?: string; aspectsSociaux?: any; 
+
+  // Nouveaux champs pour la période d'activité
+  periodeVerriere?: PeriodeVerriereData; // Champ principal, les autres sont des enfants.
+  /* periodeActiviteTexte?: string;
+  anneeFondationApprox?: number;
+  anneeFermetureApprox?: number; */
+  dateDebutStructurée?: DateStructuree; // Groupe de champs pour la date de début détaillée
+  dateFinStructurée?: DateStructuree;   // Groupe de champs pour la date de fin détaillée
+
+  // Nouveau champ pour les noms historiques
+  nomsHistoriquesEtRaisonsSociales?: NomHistoriqueOuSocial[];
+
+  // Champs existants (vérifiez si les types sont toujours corrects)
+  lieuPrincipal?: LieuType | string; // string si non peuplé, LieuType si peuplé
+  statutActuel?: string;
+  notesStatutVestiges?: string;
+  histoire?: any; // Type RichText Lexical JSON
+  techniquesInnovations?: string; // Ou RichText?
+  aspectsSociaux?: any; // Type RichText Lexical JSON
+  
+  imagesEtMedias?: MediaItem[];
+  sourcesBibliographiques?: SourceBibliographique[];
+  
+  // Relations (assurez-vous que les types VerrierType etc. sont bien définis)
+  fondateurs?: (VerrierType | string | number)[]; // string | number si non peuplé
+  typesDeProduction?: Array<{ id: string; nom?: string; slug?: string }>; // Si c'est une relation, le type sera plus complexe si peuplé
+  engagements?: EngagementType[];
+
+  // Champs pour les Groupements et Filiation (à ajouter plus tard, mais pour mémoire)
+  // appartenancesAGroupements?: Array<{ groupement: string | GroupementVerrierType; periodeAuSeinDuGroupement?: string; ... }>;
+  // succedeA?: VerrerieType | string;
+  // reprisePar?: (VerrerieType | string)[];
+
+  // Champs de métadonnées Payload
+  updatedAt?: string;
+  createdAt?: string;
 }
 interface VerreriePageProps { params: { slug: string; }; }
 
@@ -103,9 +192,67 @@ const InlineDocument: React.FC<{ src?: string; caption?: string; altText?: strin
   );
 };
 
+// Composant de menu de navigation pour la page, positionné dans la colonne de droite
+// Composant de navigation avec police agrandie
+const PageNavigationMenu = () => {
+  return (
+    <nav className="mb-4">
+      <ul className="flex justify-center items-center gap-x-6 border-b border-blueGray-200 pb-2 list-none p-0">
+        <li>
+          <a href="#histoire" className="font-semibold text-blueGray-600 no-underline hover:text-gold transition-colors text-base"> {/* text-base ici */}
+            Histoire
+          </a>
+        </li>
+        <li>
+          <a href="#personnes-liees" className="font-semibold text-blueGray-600 no-underline hover:text-gold transition-colors text-base"> {/* text-base ici */}
+            Personnes Liées
+          </a>
+        </li>
+        <li>
+          <a href="#galerie" className="font-semibold text-blueGray-600 no-underline hover:text-gold transition-colors text-base"> {/* text-base ici */}
+            Galerie
+          </a>
+        </li>
+      </ul>
+    </nav>
+  );
+};
+// Composant pour le lien de retour en haut
+const BackToTop = () => {
+  return (
+    <div className="mt-4 pt-4 border-t border-blueGray-200">
+      <a href="#" className="font-semibold text-blueGray-600 hover:text-gold transition-colors text-sm">
+        ↑ Retour en haut
+      </a>
+    </div>
+  );
+};
+
+interface GroupedListItemProps<T extends VerrierType> {
+  personne: T;
+  engagements: EngagementDetailPourListe[];
+}
+
+const getStatutLabel = (value?: string): string => {
+  if (!value) return 'N/A';
+  const option = statutVerrerieOptions.find(opt => opt.value === value);
+  return option ? option.label : value; // Retourne la valeur brute si le label n'est pas trouvé
+};
+
 // PersonalityListItem (pour affichage en liste simple dans la colonne principale)
-const PersonalityListItem: React.FC<{person: PersonnaliteType, fonction?: string, periode?: string}> = ({ person, fonction, periode }) => {
-  const nomCompletAffichage = person.nomComplet || `${person.prenom || ''} ${person.nom || ''}`.trim() || 'Personnalité Inconnue';
+const PersonalityListItem: React.FC<GroupedListItemProps<VerrierType>> = ({ personne, engagements }) => {
+  let nomCompletAffichage = personne.nomComplet || `${personne.prenom || ''} ${personne.nom || ''}`.trim() || 'Personnalité Inconnue';
+  const anneeN = personne.anneeNaissance;
+  const anneeD = personne.anneeDeces;
+  const accordE = personne.sexe === 'F' ? 'e' : ''; // 'e' pour le féminin, chaîne vide sinon
+
+  if (anneeN && anneeD) {
+    nomCompletAffichage = `${nomCompletAffichage} (${anneeN} - ${anneeD})`;
+  } else if (anneeN) {
+    nomCompletAffichage = `${nomCompletAffichage} (Né${accordE} en ${anneeN})`; 
+  } else if (anneeD) {
+    nomCompletAffichage = `${nomCompletAffichage} (Décédé${accordE} en ${anneeD})`;
+  }
   return (
     // Gardez les classes de ce div comme dans la version que vous trouviez la plus acceptable visuellement
     // Le 'border-b border-blueGray-100 last:border-b-0' est le trait fin.
@@ -119,68 +266,127 @@ const PersonalityListItem: React.FC<{person: PersonnaliteType, fonction?: string
       <div className="flex flex-wrap items-baseline gap-x-1.5 min-w-0">
         <h4 className="font-semibold text-blueGray-700 font-serif leading-tight whitespace-nowrap">
           <Link
-            href={person.slug ? `/personnalites/${person.slug}` : '#'}
+            href={personne.slug ? `/verriers/${personne.slug}` : '#'}
             className="text-gold hover:text-gold-dark text-m no-underline hover:underline decoration-gold hover:decoration-gold-dark transition-colors"
           >
             {nomCompletAffichage}
           </Link>
         </h4>
-        {(fonction || periode) &&
-          <span className="text-s text-blueGray-600 font-sans whitespace-nowrap">
-            {fonction}{fonction && periode && <span className="text-blueGray-400">, </span>}{periode && <span className="text-blueGray-500">{periode}</span>}
-          </span>
-        }
+        <div className="mt-1 space-y-0.5">
+          {engagements.map(eng => (
+            <div key={eng.engagementId} className="text-xs text-blueGray-600 font-sans">
+              {eng.fonction && <span className="text-blueGray-700 font-semibold">{eng.fonction}</span>}
+              {eng.fonction && eng.periode && <span className="text-blueGray-400">, </span>}
+              {eng.periode && <span className="text-blueGray-500">{eng.periode}</span>}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 };
 
-const SuggestionCard: React.FC<{ name: string; period: string; link: string; image?: string }> = ({ name, period, link, image }) => {
+// Composant pour afficher une carte de suggestion de verrerie
+// C'est une liste de verreries, avec un lien vers la page de détails
+const SuggestionCard: React.FC<{ verrerie: VerrerieType }> = ({ verrerie }) => {
+  const name = verrerie.nomPrincipal || 'Verrerie inconnue';
+  const link = verrerie.slug ? `/verreries/${verrerie.slug}` : '#';
+  
+  // On utilise la première image de la galerie comme image principale
+  const image = verrerie.imagesEtMedias && verrerie.imagesEtMedias[0];
+  const imageUrl = image?.url ? `${process.env.NEXT_PUBLIC_PAYLOAD_URL || ''}${image.url}` : 'https://placehold.co/600x400.png?text=Image+N/A';
+
+  // On reprend notre logique pour la période
+  let periodeAffichee = '';
+  if (verrerie.periodeVerriere?.periodeActiviteTexte) {
+    periodeAffichee = verrerie.periodeVerriere.periodeActiviteTexte;
+  } else if (verrerie.periodeVerriere?.anneeFondationApprox || verrerie.periodeVerriere?.anneeFermetureApprox) {
+    periodeAffichee = `env. ${verrerie.periodeVerriere.anneeFondationApprox || '?'} - ${verrerie.periodeVerriere.anneeFermetureApprox || '...'}`;
+  }
+
   return (
-    <Link href={link} className="block bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 group text-blueGray-600 no-underline">
-      {image ? (
-        <div className="relative w-full h-36 rounded-md mb-4 overflow-hidden">
-         <Image src={image} alt={name} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
-        </div>
-      ) : (
-        <div className="w-full h-36 bg-blueGray-100 rounded-md mb-4 flex items-center justify-center text-blueGray-400 font-sans">Image N/A</div>
-      )}
-      <h3 className="text-lg font-semibold text-blueGray-800 font-serif mb-1">{name}</h3>
-      <p className="text-xs text-blueGray-500 font-sans mb-3">{period}</p>
-      <span className="inline-block text-sm text-gold group-hover:text-gold-dark font-semibold font-sans group-hover:underline decoration-gold group-hover:decoration-gold-dark">
-        En savoir plus &rarr;
-      </span>
+    <Link
+      href={link}
+      className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1 group text-blueGray-600 no-underline"
+    >
+      <div className="relative w-full h-48">
+        {/* On utilise la balise <img> simple, qui est fiable */}
+        <img 
+          src={imageUrl} 
+          alt={image?.alt || name} 
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+      <div className="p-6 flex flex-col flex-grow">
+        <h3 className="text-xl font-semibold text-blueGray-800 mb-2 font-serif group-hover:text-gold transition-colors">{name}</h3>
+        {periodeAffichee && (
+          <p className="text-blueGray-500 font-sans text-sm mb-4 flex-grow">
+            {periodeAffichee}
+          </p>
+        )}
+        <span className="inline-block mt-auto text-gold group-hover:text-gold-dark font-semibold font-sans self-start">
+          En savoir plus &rarr;
+        </span>
+      </div>
     </Link>
   );
 };
 
-const VerrierListItem: React.FC<{verrier: VerrierType, metier?: string, periode?: string}> = ({ verrier, metier, periode }) => {
-  const nomCompletAffichage = verrier.nomComplet || `${verrier.prenom || ''} ${verrier.nom || ''}`.trim() || 'Verrier Inconnu';
+const VerrierListItem: React.FC<GroupedListItemProps<VerrierType>> = ({ personne, engagements }) => {
+  let nomCompletAffichage = personne.nomComplet || `${personne.prenom || ''} ${personne.nom || ''}`.trim() || 'Verrier Inconnu';
+  const anneeN = personne.anneeNaissance;
+  const anneeD = personne.anneeDeces;
+  const accordE = personne.sexe === 'F' ? 'e' : '';
+
+  if (anneeN && anneeD) {
+    nomCompletAffichage = `${nomCompletAffichage} (${anneeN} - ${anneeD})`;
+  } else if (anneeN) {
+    nomCompletAffichage = `${nomCompletAffichage} (Né${accordE} en ${anneeN})`; 
+  } else if (anneeD) {
+    nomCompletAffichage = `${nomCompletAffichage} (Décédé${accordE} en ${anneeD})`;
+  }
+
   return (
-    <div className="flex items-center space-x-2 py-1 border-b border-blueGray-100 last:border-b-0">
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      fill="none" 
-      viewBox="0 0 24 24" 
-      strokeWidth="1.5" 
-      stroke="currentColor" 
-      className="w-6 h-6 text-gold shrink-0"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2 22h20M4 22V10l4-3 4 3 4-3 4 3v12M8 16h2m4 0h2M8 12h2m4 0h2M18 9V6h-2v3" />
-    </svg>
-      <div className="flex flex-wrap items-baseline gap-x-1.5 min-w-0"> 
-        <h4 className="font-semibold text-blueGray-700 font-serif leading-tight whitespace-nowrap my-0">
-          <Link href={verrier.slug ? `/verriers/${verrier.slug}` : '#'} className="text-gold hover:text-gold-dark no-underline hover:underline decoration-gold hover:decoration-gold-dark transition-colors">
-            {nomCompletAffichage}
-          </Link>
-        </h4>
-        {(metier || periode) && 
-          <span className="text-xs text-blueGray-600 font-sans whitespace-nowrap">
-            {metier && <span className="text-blueGray-700">{metier}</span>}
-            {metier && periode && <span className="text-blueGray-400">, </span>}
-            {periode && <span className="text-blueGray-500">{periode}</span>}
-          </span>
-        }
+    <div className="py-2 border-b border-blueGray-100 last:border-b-0 group">
+      {/* Conteneur Flex principal pour l'icône et TOUT le contenu textuel à sa droite */}
+      <div className="flex items-start space-x-3"> {/* Utiliser items-start pour aligner le haut de l'icône avec le haut du bloc de texte */}
+        
+        {/* Icône */}
+        <div className="flex-shrink-0 pt-0"> {/* pt-0.5 ou pt-1 pour un léger ajustement vers le bas de l'icône afin de l'aligner avec la première ligne de texte */}
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            strokeWidth="1.5" 
+            stroke="currentColor" 
+            className="w-5 h-5 text-gold group-hover:text-gold-dark transition-colors"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2 22h20M4 22V10l4-3 4 3 4-3 4 3v12M8 16h2m4 0h2M8 12h2m4 0h2M18 9V6h-2v3" />
+          </svg>
+        </div>
+
+        {/* Bloc de texte principal (Nom + liste des engagements) */}
+        <div className="flex flex-col min-w-0 flex-grow"> {/* Ce div est en colonne pour Nom PUIS Engagements */}
+          <h4 className="font-semibold text-blueGray-700 font-serif leading-tight whitespace-nowrap my-0"> {/* Pas de mb-1 ici, l'espace sera après */}
+            <Link href={personne.slug ? `/verriers/${personne.slug}` : '#'} className="text-gold hover:text-gold-dark no-underline hover:underline decoration-gold hover:decoration-gold-dark transition-colors">
+              {nomCompletAffichage}
+            </Link>
+          </h4>
+
+          {/* Liste des engagements, seulement si engagements existe et a des items */}
+          {engagements && engagements.length > 0 && (
+            <div className="space-y-0.5"> {/* si nécessaire : mt-1 pour espacer ce bloc du nom */}
+              {engagements.map(eng => (
+                <div key={eng.engagementId} className="text-xs text-blueGray-600 font-sans">
+                  {eng.fonction && <span className="text-blueGray-700 font-semibold">{eng.fonction}</span>}
+                  {eng.fonction && eng.periode && <span className="text-blueGray-400">, </span>}
+                  {eng.periode && <span className="text-blueGray-500">{eng.periode}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -189,38 +395,214 @@ const VerrierListItem: React.FC<{verrier: VerrierType, metier?: string, periode?
 // --- Fonction de Récupération des Données ---
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 async function fetchFullRelatedDoc(collectionSlug: string, id: string | number): Promise<any | null> { try { const apiUrl = `${payloadUrl}/api/${collectionSlug}/${id}?depth=0&locale=fr&fallback-locale=fr`; const response = await fetch(apiUrl, { cache: 'no-store' }); if (!response.ok) { console.error(`[fetchRelatedDoc] Erreur API pour ${collectionSlug} ID ${id} (${response.status}): ${await response.text()}`); return null; } return await response.json(); } catch (error) { console.error(`[fetchRelatedDoc] Exception pour ${collectionSlug} ID ${id}:`, error); return null; } }
-async function getVerrerie(slug: string): Promise<VerrerieType | null> { try { const apiUrl = `${payloadUrl}/api/verreries?where[slug][equals]=${slug}&depth=2&locale=fr&fallback-locale=fr&limit=1`; const response = await fetch(apiUrl, { cache: 'no-store' }); if (!response.ok) { console.error(`Erreur API Payload (${response.status}): ${await response.text()}`); throw new Error(`Failed to fetch verrerie: ${response.status}`); } const data = await response.json(); if (!data.docs || data.docs.length === 0) { console.warn(`[getVerrerie] Aucune verrerie trouvée pour le slug: ${slug}`); return null; } const verrerie = data.docs[0] as VerrerieType; if (verrerie.engagements && verrerie.engagements.length > 0) { const populatedEngagements = await Promise.all( verrerie.engagements.map(async (engagement) => { if (engagement.personneConcernee && (typeof engagement.personneConcernee.value === 'string' || typeof engagement.personneConcernee.value === 'number')) { const personneId = engagement.personneConcernee.value; const relationTo = engagement.personneConcernee.relationTo; const personneDetails = await fetchFullRelatedDoc(relationTo, personneId); if (personneDetails) { return { ...engagement, personneConcernee: { relationTo, value: personneDetails } }; } } return engagement; }) ); verrerie.engagements = populatedEngagements.filter(e => e !== null && e.personneConcernee && typeof e.personneConcernee.value === 'object') as EngagementType[]; } if (verrerie.fondateurs && verrerie.fondateurs.length > 0) { const populatedFondateurs = await Promise.all( verrerie.fondateurs.map(async (personOrId) => { if (personOrId && (typeof personOrId === 'string' || typeof personOrId === 'number')) { return await fetchFullRelatedDoc('personnalites', personOrId); } return personOrId; }) ); verrerie.fondateurs = populatedFondateurs.filter(p => p !== null) as PersonnaliteType[]; } return verrerie; } catch (error) { console.error("[getVerrerie]", error); return null; } }
+
+async function getVerrerie(slug: string): Promise<VerrerieType | null> { 
+  try { 
+    const verrerieUrl = `${payloadUrl}/api/verreries?where[slug][equals]=${slug}&depth=1&locale=fr&fallback-locale=fr&limit=1`;
+    const verrerieResponse = await fetch(verrerieUrl, { cache: 'no-store' });
+
+    if (!verrerieResponse.ok) {
+      console.error(`Erreur API Payload (${verrerieResponse.status}): ${await verrerieResponse.text()}`);
+      throw new Error(`Failed to fetch verrerie: ${verrerieResponse.status}`);
+    }
+
+    const verrerieData = await verrerieResponse.json();
+    if (!verrerieData.docs || verrerieData.docs.length === 0) {
+      console.warn(`[getVerrerie] Aucune verrerie trouvée pour le slug: ${slug}`);
+      return null;
+    }
+
+    const verrerie = verrerieData.docs[0] as VerrerieType;
+
+    // === ÉTAPE 2 : Récupérer les engagements liés à cette verrerie SÉPARÉMENT ===
+    // On va chercher dans la collection 'engagements' tous ceux dont le champ 'verrerie' est l'ID de notre verrerie.
+    // Assurez-vous que dans votre collection 'Engagements', le champ de relation vers une verrerie s'appelle bien 'verrerie'.
+    const engagementsUrl = `${payloadUrl}/api/engagements?where[verrerie][equals]=${verrerie.id}&depth=2&limit=100`;
+    const engagementsResponse = await fetch(engagementsUrl, { cache: 'no-store' });
+
+    if (engagementsResponse.ok) {
+      const engagementsData = await engagementsResponse.json();
+      // On attache manuellement les engagements récupérés à notre objet verrerie.
+      verrerie.engagements = engagementsData.docs;
+    } else {
+      console.error(`Impossible de récupérer les engagements pour la verrerie ${verrerie.id}`);
+      verrerie.engagements = []; // S'assurer que le champ est un tableau vide en cas d'erreur
+    }
+
+    if (verrerie.fondateurs && verrerie.fondateurs.length > 0) { 
+      const populatedFondateurs = await Promise.all( verrerie.fondateurs.map(async (personOrId) => { 
+        if (personOrId && (typeof personOrId === 'string' || typeof personOrId === 'number')) {
+          return await fetchFullRelatedDoc('personnalites', personOrId); 
+        } 
+        return personOrId; 
+      }) 
+    ); 
+    verrerie.fondateurs = populatedFondateurs.filter(p => p !== null) as VerrierType[]; 
+  } 
+  return verrerie; 
+  } catch (error) { 
+    console.error("[getVerrerie]", error); return null; 
+  } 
+}
+
+type Props = {
+  params: { slug: string };
+};
+
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata // Permet d'accéder aux métadonnées du parent
+): Promise<Metadata> {
+  const { slug } = await params;
+  const verrerie = await getVerrerie(slug); // Récupérer les données pour le titre
+
+  if (!verrerie) {
+    return {
+      title: 'Verrerie inconnue',
+    };
+  }
+
+  return {
+    title: verrerie.nomPrincipal, // Le titre de la page sera "Nom de la Verrerie | Radix Vitri"
+    description: `Histoire de la ${verrerie.nomPrincipal}. ${verrerie.periodeVerriere?.periodeActiviteTexte || ''}`,
+    // Vous pouvez ajouter d'autres métadonnées ici (openGraph, etc.)
+  };
+}
 
 // --- Composant de Page ---
 export default async function VerreriePage({ params }: VerreriePageProps) {
-  const resolvedParams = await params; 
-  const { slug } = resolvedParams; 
+  const { slug } = await params;
   const verrerie = await getVerrerie(slug);
 
+  console.log("Données brutes pour la verrerie (nombre d'engagements) :", JSON.stringify(verrerie?.engagements?.length, null, 2));
+
   if (!verrerie) {
-    notFound(); 
+    notFound(); // Si la verrerie n'est pas trouvée, on affiche une page 404
   }
+
+  // Vérification des données de la verrerie (galerie d'images)
+  console.log("Données brutes pour la galerie (nombre d'images) :", JSON.stringify(verrerie?.imagesEtMedias?.length, null, 2));
   
-  const payloadBaseUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-  const mockSuggestions = [ { name: "Verrerie de Givors", period: "1749 - XIXe", link: "#", image: "https://placehold.co/300x200/f9f6f2/2d3e50?text=Givors" }, { name: "Verrerie de Rive-de-Gier", period: "XVIIIe - XXe", link: "#", image: "https://placehold.co/300x200/f9f6f2/2d3e50?text=Rive-de-Gier" }, { name: "Cristallerie du Creusot", period: "1786 - 1930s", link: "#", image: "https://placehold.co/300x200/f9f6f2/2d3e50?text=Le+Creusot" }, ];
+
+  const nomsHistoriquesTries = verrerie.nomsHistoriquesEtRaisonsSociales?.sort((a, b) => {
+    const anneeA = a.anneeDebut || (a.periodeValidite ? parseInt(a.periodeValidite.split('-')[0]) : 0) || 0;
+    const anneeB = b.anneeDebut || (b.periodeValidite ? parseInt(b.periodeValidite.split('-')[0]) : 0) || 0;
+    return anneeA - anneeB;
+  }) || [];
 
   // Extraire les données du lieu principal de manière sécurisée
   const lieu = (verrerie.lieuPrincipal && typeof verrerie.lieuPrincipal === 'object')
     ? verrerie.lieuPrincipal as LieuType
     : null;
 
-  // Filtrer les engagements pour les personnalités (NE PLUS EXCLURE les fondateurs)
+  // Filtre les engagements de type "rôle de personnalité" (directeur, propriétaire...)
   const personnalitesEngagements = verrerie.engagements?.filter(
-    eng => eng.personneConcernee?.relationTo === 'personnalites' && 
-           typeof eng.personneConcernee.value === 'object'
+    eng => eng.typeEngagement === 'role_personnalite' &&
+          typeof eng.personneConcernee === 'object' && // On vérifie que personneConcernee est un objet...
+          eng.personneConcernee !== null                // ...et pas null
   ) || [];
 
+  // Filtre les engagements de type "métier de verrier" (souffleur, tailleur...)
   const verriersEngagements = verrerie.engagements?.filter(
-    eng => eng.personneConcernee?.relationTo === 'verriers' && 
-           typeof eng.personneConcernee.value === 'object'
+    eng => eng.typeEngagement === 'metier_verrier' &&
+          typeof eng.personneConcernee === 'object' && // Idem ici
+          eng.personneConcernee !== null
   ) || [];
 
-    // PRÉPARER LES DONNÉES POUR LA CARTE DE CETTE VERRERIE SPÉCIFIQUE
+  // AJOUTEZ CES LIGNES DE DÉBOGAGE
+  console.log('Nombre de personnalités après filtrage:', personnalitesEngagements.length);
+  console.log('Nombre de verriers après filtrage:', verriersEngagements.length);
+
+  // NOUVELLE LOGIQUE DE GROUPEMENT POUR LES PERSONNALITÉS
+  const personnalitesGroupees: PersonneAvecEngagements<VerrierType>[] = (() => {
+    if (!personnalitesEngagements || personnalitesEngagements.length === 0) return [];
+    const map = new Map<string | number, PersonneAvecEngagements<VerrierType>>();
+
+    // 1. Trier les engagements globaux (personnalitesEngagements) si pas déjà fait par l'API
+    // Cela assure que si une personne a plusieurs engagements, ils sont ajoutés dans l'ordre
+    const engagementsTries = [...personnalitesEngagements].sort((a, b) => {
+      const anneeA = a.dateDebutStructurée?.anneeDebutSort || 9999;
+      const moisA = a.dateDebutStructurée?.moisDebutSort || 13; // 13 pour mettre les mois inconnus après les mois connus
+      const anneeB = b.dateDebutStructurée?.anneeDebutSort || 9999;
+      const moisB = b.dateDebutStructurée?.moisDebutSort || 13;
+      if (anneeA !== anneeB) return anneeA - anneeB;
+      return moisA - moisB;
+    });
+
+    for (const engagement of engagementsTries) {
+      if (engagement.personneConcernee && typeof engagement.personneConcernee === 'object') {
+        const personne = engagement.personneConcernee as unknown as VerrierType; // Accès direct !
+        
+        let fonctionNom: string | undefined = undefined;
+        if (engagement.fonctionPersonnalite && typeof engagement.fonctionPersonnalite === 'object' && 'nom' in engagement.fonctionPersonnalite) {
+          fonctionNom = (engagement.fonctionPersonnalite as Fonction).nom;
+        }
+
+        if (!map.has(personne.id)) {
+          map.set(personne.id, {
+            personne: personne, // personne est de type VerrierType
+            engagementsDetails: []
+          });
+        }
+        map.get(personne.id)!.engagementsDetails.push({
+          engagementId: engagement.id,
+          fonction: fonctionNom,
+          periode: formatPeriode(
+            engagement.dateDebutStructurée as DateDebut,
+            engagement.dateFinStructurée as DateFin
+          ),
+        });
+      }
+    }
+    return Array.from(map.values());
+  })();
+
+  // FAIRE DE MÊME POUR 'verriersGroupes' en adaptant les types et champs
+  const verriersGroupes: PersonneAvecEngagements<VerrierType>[] = (() => {
+    if (!verriersEngagements || verriersEngagements.length === 0) return [];
+    const map = new Map<string | number, PersonneAvecEngagements<VerrierType>>();
+    const engagementsTries = [...verriersEngagements].sort((a, b) => { /* ... même logique de tri ... */
+        const anneeA = a.dateDebutStructurée?.anneeDebutSort || 9999;
+        const moisA = a.dateDebutStructurée?.moisDebutSort || 13;
+        const anneeB = b.dateDebutStructurée?.anneeDebutSort || 9999;
+        const moisB = b.dateDebutStructurée?.moisDebutSort || 13;
+        if (anneeA !== anneeB) return anneeA - anneeB;
+        return moisA - moisB;
+    });
+
+    for (const engagement of engagementsTries) {
+      if (engagement.personneConcernee && typeof engagement.personneConcernee === 'object') {
+        const personne = engagement.personneConcernee as unknown as VerrierType; 
+        
+        let fonctionNom: string | undefined = undefined;
+        // CORRECTION DE LA CONDITION ET DE L'ASSIGNATION CI-DESSOUS :
+        if (engagement.fonctionVerrier && 
+            typeof engagement.fonctionVerrier === 'object' && 
+            engagement.fonctionVerrier !== null && // S'assurer qu'il n'est pas null
+            'nom' in engagement.fonctionVerrier) { 
+          fonctionNom = (engagement.fonctionVerrier as Fonction).nom;
+        }
+
+        if (!map.has(personne.id)) {
+          map.set(personne.id, {
+            personne: personne,
+            engagementsDetails: []
+          });
+        }
+        map.get(personne.id)!.engagementsDetails.push({
+          engagementId: engagement.id,
+          fonction: fonctionNom,
+          periode: formatPeriode(
+            engagement.dateDebutStructurée as DateDebut,
+            engagement.dateFinStructurée as DateFin
+          ),
+        });
+      }
+    }
+    return Array.from(map.values());
+  })();
+
+  // PRÉPARER LES DONNÉES POUR LA CARTE DE CETTE VERRERIE SPÉCIFIQUE
   let verreriePourLaCarte: MapPoint[] = [];
   if (lieu && lieu.coordonnees && verrerie.slug && verrerie.nomPrincipal) {
     verreriePourLaCarte = [{
@@ -232,113 +614,180 @@ export default async function VerreriePage({ params }: VerreriePageProps) {
     }];
   }
 
+  // Préparer les images pour la galerie
+  const imagesPourGalerie = verrerie.imagesEtMedias
+    ?.filter(img => typeof img?.url === 'string') // On garde le filtre de sécurité
+    .map(img => ({
+      ...img,
+      // On construit l'URL complète ici, côté serveur !
+      url: `${process.env.NEXT_PUBLIC_PAYLOAD_URL || ''}${img.url}`,
+    }));
+
+  let suggestions = [];
+  
+  // On essaie d'abord de récupérer le pays de la verrerie actuelle
+  const pays = (typeof verrerie.lieuPrincipal === 'object' && verrerie.lieuPrincipal.pays) 
+    ? verrerie.lieuPrincipal.pays 
+    : null;
+
+  const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
+  const suggestionsApiUrl = new URL(`${payloadUrl}/api/verreries`);
+
+  // Si on a un pays, on l'utilise pour filtrer. Sinon, on ne met pas de filtre géographique.
+  if (pays) {
+    suggestionsApiUrl.searchParams.append('where[lieuPrincipal.pays][equals]', pays);
+  }
+
+  suggestionsApiUrl.searchParams.append('where[id][not_equals]', verrerie.id); // Toujours exclure la verrerie actuelle
+  suggestionsApiUrl.searchParams.append('limit', '20'); // On prend une liste plus large pour avoir du hasard
+  suggestionsApiUrl.searchParams.append('depth', '1');
+
+  try {
+    const suggestionsResponse = await fetch(suggestionsApiUrl.toString(), { cache: 'no-store' });
+    if (suggestionsResponse.ok) {
+      const suggestionsData = await suggestionsResponse.json();
+      if (suggestionsData.docs && suggestionsData.docs.length > 0) {
+        // On mélange le tableau de résultats et on en prend les 2 premiers
+        suggestions = suggestionsData.docs.sort(() => 0.5 - Math.random()).slice(0, 2);
+      }
+      console.log(`Suggestions aléatoires trouvées:`, suggestions.length);
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération des suggestions:", error);
+  }
+
   return (
     <div className="bg-cream text-blueGray-700 font-serif min-h-screen"> 
       <div className="container mx-auto px-4 py-8 md:px-6 md:py-12"> 
         <header className="mb-10 md:mb-16 text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-blueGray-800 mb-3 tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-limelight text-blueGray-800 mb-3 tracking-tight">
             {verrerie.nomPrincipal}
           </h1>
-          {verrerie.nomsAlternatifs && verrerie.nomsAlternatifs.length > 0 && (
-            <p className="text-blueGray-500 text-lg font-sans">
-              <span className="italic">Aussi connue sous :</span> {verrerie.nomsAlternatifs.map((na, index) => <span key={na.id || `na-${index}`}>{na.nom}</span>).reduce((prev, curr, index) => <>{prev}{index > 0 ? ', ' : ''}{curr}</>)}
+          {verrerie.nomsHistoriquesEtRaisonsSociales && verrerie.nomsHistoriquesEtRaisonsSociales.length > 0 && (
+            <p className="text-blueGray-500 text-lg font-sans mt-1">
+              <span className="italic">Aussi connue sous : </span> 
+              {verrerie.nomsHistoriquesEtRaisonsSociales
+                .filter(nh => nh.nom !== verrerie.nomPrincipal) // Optionnel: exclure le nom principal s'il y est
+                .map(nh => nh.nom) // Prendre juste le nom
+                .join(' - ') // Les joindre avec un séparateur
+              }
             </p>
           )}
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-x-12 gap-y-10"> 
-          <main className="lg:col-span-2 space-y-12"> 
+          <main className="lg:col-span-2 space-y-8"> 
             
-            {verrerie.histoire && ( <section id="histoire" className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-blueGray-800 prose-a:text-gold prose-strong:text-blueGray-800 prose-blockquote:border-gold prose-blockquote:text-blueGray-600"> <ArticleContentRenderer content={verrerie.histoire} /> </section> )}
-            {/* ... autres sections ... */}
-
-            {/* Section "Personnalités Liées" (via Engagements) - dans la colonne principale */}
-            {personnalitesEngagements.length > 0 && (
-              <section id="personnalites-engagees" className="mt-10"> {/* Réduit le mt-16 à mt-10 */}
-                <h2 className="text-2xl font-semibold text-blueGray-800 mb-5 font-serif border-b border-blueGray-200 pb-2.5"> {/* Titre un peu plus petit, marge et padding ajustés */}
-                  Personnalités Clés
+            {nomsHistoriquesTries.length > 0 && (
+              <section id="noms-historiques" className="mb-12"> {/* Ajout de mb-12 pour espacer de la section suivante */}
+                <h2 className="text-3xl font-bold text-blueGray-800 mb-6 border-b-2 border-blueGray-200 pb-3 font-serif">
+                  Noms et raisons sociales au fil du temps
                 </h2>
-                <div className="space-y-0"> {/* Réduit l'espace entre les items à 0, car le py-2.5 et border-b de l'item gèrent déjà l'espacement */}
-                  {personnalitesEngagements.map(engagement => {
-                    if (engagement.personneConcernee && typeof engagement.personneConcernee.value === 'object' && engagement.personneConcernee.value !== null) {
-                      return ( <PersonalityListItem key={engagement.id} person={engagement.personneConcernee.value as PersonnaliteType} fonction={engagement.fonctionOuMetier} periode={engagement.periodeActiviteTexte} /> );
-                    }
-                    return <div key={engagement.id} className="text-sm text-blueGray-500 italic">Données de personnalité incomplètes pour engagement ID: {engagement.id}</div>;
-                  })}
-                </div>
+                <ul className="space-y-2 font-sans text-sm list-none pl-0"> {/* list-none pour enlever les puces par défaut si non désiré */}
+                  {nomsHistoriquesTries.map((item, index) => (
+                    <li key={item.id || `nom-hist-${index}`} className="p-3 bg-white rounded-md shadow-sm border border-blueGray-100">
+                      <div className="flex justify-between items-baseline">
+                        <span className="font-semibold text-base text-blueGray-700">{item.nom}</span>
+                        {item.typeDeNom && (
+                          <span className="text-xs text-gold italic ml-2">
+                            {item.typeDeNom === "raison_sociale" ? "Raison Sociale" : /* ... autres labels ... */ "Nom d'Usage"}
+                          </span>
+                        )}
+                      </div>
+                      {item.periodeValidite && (
+                        <div className="text-xs text-blueGray-500 mt-0.5">Période : {item.periodeValidite}</div>
+                      )}
+                      {item.notes && (
+                        <p className="mt-1 text-xs text-blueGray-600 whitespace-pre-line bg-blueGray-50 p-2 rounded">{item.notes}</p> // Notes avec un léger fond pour les distinguer
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </section>
             )}
 
+            {verrerie.histoire && ( 
+              <section id="histoire" className="scroll-mt-28 prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-blueGray-800 prose-a:text-gold prose-strong:text-blueGray-800 prose-blockquote:border-gold prose-blockquote:text-blueGray-600">
+                <h2 className="text-3xl font-bold text-blueGray-800 mb-6 border-b-2 border-blueGray-200 pb-3 font-serif">
+                  Histoire
+                </h2>
+                <ArticleContentRenderer content={verrerie.histoire} /> 
+              </section> 
+            )}
+
+            {/* NOUVELLE SECTION UNIFIÉE POUR LES PERSONNES LIÉES */}
+            <section id="personnes-liees" className="scroll-mt-28">
+
+              {/* La grille qui contiendra nos deux colonnes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+
+                {/* Colonne 1: Personnalités Clés */}
+                <div id="personnalites-cles">
+                  <h2 className="text-3xl font-semibold text-blueGray-800 mb-5 font-serif border-b ...">
+                    Personnalités Clés
+                  </h2>
+                  <div className="space-y-4">
+                    {personnalitesGroupees.map(item => (
+                      <PersonneCard 
+                        key={item.personne.id} 
+                        personne={item.personne} 
+                        engagements={item.engagementsDetails} 
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Colonne 2: Verriers Associés */}
+                <div id="verriers-associes">
+                  <h2 className="text-3xl font-semibold text-blueGray-800 mb-5 font-serif border-b ...">
+                    Verriers Associés
+                  </h2>
+                  <div className="space-y-4">
+                    {verriersGroupes.map(item => (
+                      <PersonneCard 
+                        key={item.personne.id} 
+                        personne={item.personne} 
+                        engagements={item.engagementsDetails} 
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+              </div>
+            </section>
+
+            {/* Section pour la galerie d'images */}
             {verrerie.imagesEtMedias && verrerie.imagesEtMedias.length > 0 && (
-              <section id="galerie" className="mt-16">
+              <section id="galerie" className="mt-16 scroll-mt-28">
                 <h2 className="text-3xl font-bold text-blueGray-800 mb-8 border-b-2 border-blueGray-200 pb-4 font-serif">
                   Galerie d&apos;Images {/* Correction : apostrophe échappée */}
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {verrerie.imagesEtMedias.map((mediaItem) => {
-                    // Assumant que 'mediaItem' est de type 'MediaItem' que vous avez défini
-                    // et que si 'mediaItem' est un objet Upload de Payload, 'mediaItem.url' est le chemin relatif
-                    // et 'mediaItem.width' / 'mediaItem.height' sont les dimensions de l'image originale.
-                    // S'il s'agit d'une relation, 'mediaItem' pourrait être l'objet Media populé.
-
-                    // Tentative de déterminer si mediaItem est un objet Media populé ou juste une chaîne d'ID
-                    // (adaptez cette logique si mediaItem est toujours un objet à cause de depth=2)
-                    const media = (typeof mediaItem === 'object' && mediaItem !== null) ? mediaItem : null;
-
-                    if (media && media.url && typeof media.url === 'string' && media.url.trim() !== '') {
-                      const imageUrl = `${payloadBaseUrl}${media.url}`;
-                      const altText = media.alt || media.filename || `Image de la verrerie ${verrerie.nomPrincipal}`;
-                      
-                      // Dimensions pour next/image. Utiliser les dimensions réelles si disponibles, sinon des valeurs par défaut.
-                      // Payload stocke souvent width/height sur l'objet media.
-                      const imageWidth = typeof media.width === 'number' && media.width > 0 ? media.width : 600; // Valeur par défaut raisonnable
-                      const imageHeight = typeof media.height === 'number' && media.height > 0 ? media.height : 400; // Valeur par défaut raisonnable
-
-                      return (
-                        <div
-                          key={media.id || media.url} // Utiliser media.id si disponible, sinon media.url comme clé
-                          className="relative rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 group bg-slate-50 aspect-[4/3]" // Utiliser aspect-ratio pour la responsivité de la hauteur
-                        >
-                          <Image
-                            src={imageUrl}
-                            alt={altText}
-                            fill // Fait que l'image remplit le conteneur parent. Le parent doit avoir une position relative.
-                            className="object-cover transform group-hover:scale-105 transition-transform duration-300"
-                            // Pour 'fill', width et height ne sont pas nécessaires sur Image, mais le parent doit avoir des dimensions
-                            // ou un ratio d'aspect. J'ai ajouté aspect-[4/3] au parent.
-                            // Si vous ne voulez pas 'fill', vous devez fournir width et height à Image
-                            // et ajuster le className (par exemple, w-full h-auto ou des dimensions fixes)
-                            // width={imageWidth} // Nécessaire si 'fill' n'est pas utilisé
-                            // height={imageHeight} // Nécessaire si 'fill' n'est pas utilisé
-                            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw" // Aide Next.js à choisir la bonne taille d'image source
-                          />
-                          {media.filename && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs text-center p-2 truncate transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-                              {media.filename}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    return null; // Si media n'est pas valide ou n'a pas d'URL
-                  })}
-                </div>
+                <GalerieVerrerie images={imagesPourGalerie || []} />
               </section>
             )}
             {verrerie.sourcesBibliographiques && verrerie.sourcesBibliographiques.length > 0 && ( <section id="sources" className="mt-16"> <h2 className="text-3xl font-bold text-blueGray-800 mb-8 border-b-2 border-blueGray-200 pb-4 font-serif">Sources</h2> <ul className="list-disc list-inside space-y-2 text-blueGray-600 font-sans text-sm"> {verrerie.sourcesBibliographiques.map(source => ( <li key={source.id || Math.random().toString(36).substr(2, 9)}> <strong>{source.titre || 'Source non titrée'}</strong> {source.auteur && ` par ${source.auteur}`} {source.detailsPublication && ` (${source.detailsPublication})`} {source.url && <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold-dark hover:underline decoration-gold hover:decoration-gold-dark ml-1"> [Lien]</a>} </li> ))} </ul> </section> )}
             
-            <section id="suggestions" className="mt-16 pt-8 border-t-2 border-blueGray-200">
-                <h2 className="text-3xl font-bold text-blueGray-800 mb-8 text-center font-serif">À Découvrir Aussi</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 lg:gap-8">
-                  {mockSuggestions.map((suggestion, index) => (
-                    <SuggestionCard key={index} {...suggestion} />
+            {suggestions && suggestions.length > 0 && (
+              <section id="suggestions" className="mt-16 pt-8 border-t-2 border-blueGray-200">
+                <h2 className="text-3xl font-bold text-blueGray-800 mb-10 font-serif">
+                  À Découvrir Aussi
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  {/* On utilise notre nouveau composant, inspiré de celui qui marche */}
+                  {suggestions.map((suggestion: VerrerieType) => (
+                    <SuggestionCard key={suggestion.id} verrerie={suggestion} />
                   ))}
                 </div>
-            </section>
+              </section>
+            )}
           </main>
 
           <aside className="lg:col-span-1">
-            <div className="sticky top-8 space-y-8"> 
+            <div className="sticky top-24 space-y-6 rounded-xl p-1">
+              {/* Bloc de navigation latérale */}
+              <PageNavigationMenu />
+
+              {/* Bloc Informations Clés */}
               <div className="bg-white p-6 rounded-xl shadow-xl border border-blueGray-100">
                 <h3 className="text-2xl font-semibold text-blueGray-800 mb-5 font-serif">Informations Clés</h3>
                 <dl className="space-y-1 text-blueGray-600 font-sans text-sm">
@@ -352,7 +801,7 @@ export default async function VerreriePage({ params }: VerreriePageProps) {
                             return (
                               <React.Fragment key={fondateur.id}>
                                 {fondateur.slug 
-                                  ? <Link href={`/personnalites/${fondateur.slug}`} className="text-gold hover:text-gold-dark">{nomComplet}</Link>
+                                  ? <Link href={`/verriers/${fondateur.slug}`} className="text-gold hover:text-gold-dark">{nomComplet}</Link>
                                   : nomComplet}
                                 {index < verrerie.fondateurs!.length - 1 && ', '}
                               </React.Fragment>
@@ -375,51 +824,49 @@ export default async function VerreriePage({ params }: VerreriePageProps) {
                       <span>{lieu.adresse}</span>
                     </div>
                   )}
-                  {verrerie.dateDeCreation && ( <div className="flex pt-1"> <strong className="font-bold text-blueGray-700 w-28 shrink-0">Création :</strong> <span>{displayDateGroup(verrerie.dateDeCreation.datePreciseCreation, verrerie.dateDeCreation.descriptionDateCreation)}</span> </div> )}
-                  {verrerie.dateDeFermeture && ( <div className="flex pt-1"> <strong className="font-bold text-blueGray-700 w-28 shrink-0">Fermeture :</strong> <span>{displayDateGroup(verrerie.dateDeFermeture.datePreciseFermeture, verrerie.dateDeFermeture.descriptionDateFermeture)}</span> </div> )}
-                  {verrerie.statutActuel && ( <div className="flex pt-1"><strong className="font-bold text-blueGray-700 w-28 shrink-0">Statut :</strong><span>{verrerie.statutActuel}</span></div>  )}
+                  {verrerie.periodeVerriere?.periodeActiviteTexte && (
+                    <div className="flex pt-1">
+                      <strong className="font-bold text-blueGray-700 w-28 shrink-0">Période :</strong>
+                      <span>{verrerie.periodeVerriere?.periodeActiviteTexte}</span>
+                    </div>
+                  )}
+                  {/* Vous pouvez aussi afficher les années approx si periodeActiviteTexte n'est pas assez précis ou en complément */}
+                  {(!verrerie.periodeVerriere?.periodeActiviteTexte && (verrerie.periodeVerriere?.anneeFondationApprox || verrerie.periodeVerriere?.anneeFermetureApprox)) && (
+                    <div className="flex pt-1">
+                      <strong className="font-bold text-blueGray-700 w-28 shrink-0">Activité (env.) :</strong>
+                      <span>
+                        {verrerie.periodeVerriere?.anneeFondationApprox || '?'} - {verrerie.periodeVerriere?.anneeFermetureApprox || 'Actuelle'}
+                      </span>
+                    </div>
+                  )}
+                  {verrerie.statutActuel && (
+                    <div className="flex pt-1">
+                      <strong className="font-bold text-blueGray-700 w-28 shrink-0">Statut :</strong>
+                      <span>{getStatutLabel(verrerie.statutActuel)}</span> {/* Bien utiliser la fonction, sinon on affiche la value/key */}
+                    </div>
+                  )}
                   {verrerie.notesStatutVestiges && ( 
                     <div className="pt-1">
                       <strong className="font-bold text-blueGray-700 block mb-0.5">Notes statut :</strong>
-                      <p className="whitespace-pre-line">{verrerie.notesStatutVestiges}</p>
+                      <TruncatedText text={verrerie.notesStatutVestiges} charLimit={250} lineLimitForClamp={3} />
                     </div> 
                   )}
                 </dl>
+                {/* On intègre la carte directement ici */}
+                {verreriePourLaCarte.length > 0 && (
+                  <div className="mt-5">
+                    <strong className="font-bold font-sans text-blueGray-700 block mb-2">Localisation :</strong>
+                    <div className="h-48 rounded-lg overflow-hidden border border-blueGray-200"> {/* Hauteur réduite à h-48 */}
+                      <MapLoader
+                        points={verreriePourLaCarte}
+                        disableMapAnimation={true}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {verreriePourLaCarte.length > 0 && ( // Vérifie s'il y a des données pour la carte
-                <div className="bg-white p-6 rounded-xl shadow-xl border border-blueGray-100">
-                  <h3 className="text-2xl font-semibold text-blueGray-800 mb-4 font-serif">Localisation</h3>
-                  <div className="h-72 rounded-lg overflow-hidden border border-blueGray-200">
-                    <MapLoader
-                      points={verreriePourLaCarte} // Passer le tableau de points
-                      // La prop 'nom' n'est plus nécessaire pour MapLoader car VerrerieMap la prend de chaque 'point'
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Bloc Verriers (dans la sidebar) */}
-              {verriersEngagements.length > 0 && (
-                <div className="bg-white p-6 rounded-xl shadow-xl border border-blueGray-100">
-                  <h3 className="text-2xl font-semibold text-blueGray-800 mb-5 font-serif">Verriers</h3>
-                  <div className="space-y-1"> 
-                    {verriersEngagements.map(engagement => {
-                        if (engagement.personneConcernee && typeof engagement.personneConcernee.value === 'object' && engagement.personneConcernee.value !== null) {
-                            return (
-                                <VerrierListItem 
-                                    key={engagement.id} 
-                                    verrier={engagement.personneConcernee.value as VerrierType}
-                                    metier={engagement.fonctionOuMetier}
-                                    periode={engagement.periodeActiviteTexte}
-                                />
-                            );
-                        }
-                        return <div key={engagement.id} className="text-sm text-blueGray-500 italic">Données de verrier incomplètes pour engagement ID: {engagement.id}</div>;
-                    })}
-                  </div>
-                </div>
-              )}
+              {/* Bloc de retour en haut */}
+              <BackToTop />
             </div> 
           </aside>
         </div>

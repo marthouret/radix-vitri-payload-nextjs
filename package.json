@@ -27,15 +27,19 @@
     "next": "15.3.0",
     "payload": "3.37.0",
     "react": "19.1.0",
+    "react-chrono": "^2.8.3",
     "react-dom": "19.1.0",
     "react-leaflet": "^5.0.0",
-    "sharp": "0.34.1"
+    "sharp": "0.34.1",
+    "slugify": "^1.6.6",
+    "yet-another-react-lightbox": "^3.23.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/express": "^5.0.3",
     "@types/leaflet": "^1.9.17",
     "@types/node": "^22.5.4",
     "@types/react": "19.1.0",

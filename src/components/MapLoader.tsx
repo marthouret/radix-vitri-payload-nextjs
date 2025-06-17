@@ -4,18 +4,9 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
+import { MapPoint } from '@/types/map'; 
 
 console.log('[MapLoader] Script MapLoader.tsx est en cours d\'exécution (niveau module)');
-
-// Importez l'interface MapPoint si elle est définie dans VerrerieMap.tsx ou un fichier partagé
-// Pour l'instant, je la redéfinis ici pour la clarté.
-interface MapPoint {
-  id: string;
-  slug: string;
-  nomPrincipal: string;
-  coordonnees: [number, number];
-  villeOuCommune?: string;
-}
 
 // Définir un composant nommé pour le cas d'erreur de l'import dynamique
 const DynamicImportErrorFallback: React.FC = () => {
@@ -49,10 +40,13 @@ const VerrerieMap = dynamic(() => {
 });
 
 interface MapLoaderProps {
-  points: MapPoint[]; // MODIFIÉ : Tableau de points
+  points: MapPoint[];
+  defaultZoomLevel?: number;
+  singlePointZoomLevel?: number;
+  disableMapAnimation?: boolean;
 }
 
-const MapLoader: React.FC<MapLoaderProps> = ({ points }) => {
+const MapLoader: React.FC<MapLoaderProps> = ({ points, disableMapAnimation }) => {
   console.log('[MapLoader Component] Rendu avec props:', { points });
 
   if (!points || points.length === 0) {
@@ -66,7 +60,7 @@ const MapLoader: React.FC<MapLoaderProps> = ({ points }) => {
 
   return (
     <div className="w-full h-full relative">
-      <VerrerieMap points={points} /> {/* MODIFIÉ : Passe le tableau de points */}
+      <VerrerieMap points={points} disableMapAnimation={disableMapAnimation} /> 
     </div>
   );
 };

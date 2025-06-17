@@ -1,20 +1,22 @@
 // src/collections/Verrier.ts
 import { CollectionConfig } from 'payload';
-// import { lexicalEditor } from '@payloadcms/richtext-lexical'; // Conservé (commenté dans votre source)
+import { createSimplifiedSlugHook } from '@/utils/payloadHooks';
+// import { lexicalEditor } from '@payloadcms/richtext-lexical'; 
 
 const Verrier: CollectionConfig = {
   slug: 'verriers',
-  labels: { // Conservé
+  labels: {  
     singular: 'Verrier',
     plural: 'Verriers',
   },
   admin: {
-    useAsTitle: 'nomComplet', // Conservé
+    useAsTitle: 'nomComplet',  
     // defaultColumns : les champs lieuDeNaissance et lieuDeDeces pointeront maintenant vers les relations
-    defaultColumns: ['nomComplet', 'dateDeNaissance', 'lieuDeNaissance', 'dateDeDeces', 'lieuDeDeces', 'specialisation', 'updatedAt'], // Conservé
+    defaultColumns: ['nomComplet', 'anneeNaissance', 'anneeDeces', 'rolePrincipal', 'updatedAt'], 
+    group: 'Verreries',
   },
   access: {
-    read: () => true, // Conservé
+    read: () => true,  
   },
   fields: [
     { // nom - Conservé
@@ -55,6 +57,22 @@ const Verrier: CollectionConfig = {
         ]
       }
     },
+    {
+      name: 'sexe',
+      label: 'Sexe',
+      type: 'select',
+      options: [
+        { label: 'Masculin', value: 'M' },
+        { label: 'Féminin', value: 'F' },
+        // Vous pourriez ajouter une option "Non spécifié" ou "Autre" si pertinent pour vos données
+        // { label: 'Non spécifié', value: 'X' }, 
+      ],
+      // required: false, // Le rendre optionnel si l'information n'est pas toujours disponible
+      admin: {
+        description: 'Pour l\'accord grammatical (Né/Née, etc.).',
+        // width: '50%', // Pour l'affichage dans l'admin
+      }
+    },
     { // slug - Conservé (y compris hook)
       name: 'slug',
       label: 'Slug (pour URL)',
@@ -64,25 +82,26 @@ const Verrier: CollectionConfig = {
       index: true,
       hooks: {
         beforeValidate: [
-          async ({ value, data, originalDoc, operation }) => {
-            const slugify = (str: string): string => str.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
-            if (typeof value === 'string' && value.length > 0) {
-              return slugify(value);
-            }
-            let nameToSlugify = data?.nomComplet !== undefined ? data.nomComplet : originalDoc?.nomComplet;
-            if (!nameToSlugify) {
-              const prenomToUse = data?.prenom !== undefined ? data.prenom : originalDoc?.prenom;
-              const nomToUse = data?.nom !== undefined ? data.nom : originalDoc?.nom;
-              if (prenomToUse || nomToUse) {
-                nameToSlugify = `${prenomToUse || ''} ${nomToUse || ''}`.trim();
-              }
-            }
-            if (nameToSlugify && (operation === 'create' || (operation === 'update' && !originalDoc?.slug) )) {
-              return slugify(nameToSlugify);
-            }
-            return value;
-          },
+          createSimplifiedSlugHook()
         ],
+      },
+    },
+        {
+      name: 'rolePrincipal',
+      label: 'Rôle Principal',
+      type: 'select',
+      options: [
+        { label: 'Fondateur', value: 'fondateur' },
+        { label: 'Maître de Verrerie (propriétaire, associé, actionnaire)', value: 'maitre_verrerie' },
+        { label: 'Directeur / Gérant', value: 'directeur' },
+        { label: 'Ingénieur / Technicien / Inventeur', value: 'ingenieur_technicien' },
+        { label: 'Maître-Verrier (Expertise / Savoir-faire)', value: 'maitre_verrier_expertise' },
+        { label: 'Artiste / Décorateur / Designer', value: 'artiste_decorateur' },
+        { label: 'Autre rôle', value: 'autre' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description: "Le rôle le plus significatif de cette personne, au-delà de ses fonctions techniques. Utile pour qualifier les 'personnalités'.",
       },
     },
     // Champs pour Naissance
@@ -98,18 +117,6 @@ const Verrier: CollectionConfig = {
             description: 'Ex: "vers 1787", "le 12/03/1850", "avant 1800"',
           }
         },
-        // --- CHAMP lieuDeNaissance MODIFIÉ ---
-        // Ancien champ texte (commenté pour suppression après migration) :
-        // {
-        //   name: 'lieuDeNaissance',
-        //   type: 'text',
-        //   label: 'Lieu de Naissance',
-        //   localized: false,
-        //   admin: {
-        //     width: '50%',
-        //   }
-        // },
-        // Nouveau champ relationship :
         {
           name: 'lieuDeNaissance',
           label: 'Lieu de Naissance',
@@ -136,18 +143,6 @@ const Verrier: CollectionConfig = {
             description: 'Ex: "vers 1820", "le 01/10/1899", "après 1870"',
           }
         },
-        // --- CHAMP lieuDeDeces MODIFIÉ ---
-        // Ancien champ texte (commenté pour suppression après migration) :
-        // {
-        //   name: 'lieuDeDeces',
-        //   type: 'text',
-        //   label: 'Lieu de Décès',
-        //   localized: false,
-        //   admin: {
-        //     width: '50%',
-        //   }
-        // },
-        // Nouveau champ relationship :
         {
           name: 'lieuDeDeces',
           label: 'Lieu de Décès',
@@ -160,6 +155,25 @@ const Verrier: CollectionConfig = {
           }
         },
       ]
+    },
+    // Nouveaux champs pour l'affichage, redondants mais améliorent l'UX/UI
+    {
+      name: 'anneeNaissance',
+      label: 'Année de Naissance (pour affichage/tri)',
+      type: 'number',
+      admin: {
+        description: 'Année seulement, ex: 1855. Utile pour distinguer les homonymes.',
+        width: '50%'
+      }
+    },
+    {
+      name: 'anneeDeces',
+      label: 'Année de Décès (pour affichage/tri)',
+      type: 'number',
+      admin: {
+        description: 'Année seulement, ex: 1939.',
+        width: '50%'
+      }
     },
     { // periodePrincipaleActivite - Conservé
       name: 'periodePrincipaleActivite',
@@ -176,9 +190,19 @@ const Verrier: CollectionConfig = {
     { // notesBiographie - Conservé
       name: 'notesBiographie',
       type: 'richText',
-      // editor: lexicalEditor({}), // Conservé (commenté dans votre source)
+      // editor: lexicalEditor({}),   (commenté dans votre source)
       label: 'Notes biographiques / Parcours',
       localized: true,
+    },
+    {
+      name: 'ancetreDirect',
+      label: 'Ancêtre Direct',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Cochez cette case si cette personne est un de vos ancêtres directs.',
+      }
     },
   ],
 };

@@ -69,12 +69,16 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    pages: Page;
     verreries: Verrery;
-    personnalites: Personnalite;
     verriers: Verrier;
     'types-de-production': TypesDeProduction;
     engagements: Engagement;
+    'evenements-biographiques': EvenementsBiographique;
     lieux: Lieux;
+    'fonctions-verriers': FonctionsVerrier;
+    'fonctions-personnalites': FonctionsPersonnalite;
+    histoires: Histoire;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -83,12 +87,16 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
     verreries: VerreriesSelect<false> | VerreriesSelect<true>;
-    personnalites: PersonnalitesSelect<false> | PersonnalitesSelect<true>;
     verriers: VerriersSelect<false> | VerriersSelect<true>;
     'types-de-production': TypesDeProductionSelect<false> | TypesDeProductionSelect<true>;
     engagements: EngagementsSelect<false> | EngagementsSelect<true>;
+    'evenements-biographiques': EvenementsBiographiquesSelect<false> | EvenementsBiographiquesSelect<true>;
     lieux: LieuxSelect<false> | LieuxSelect<true>;
+    'fonctions-verriers': FonctionsVerriersSelect<false> | FonctionsVerriersSelect<true>;
+    'fonctions-personnalites': FonctionsPersonnalitesSelect<false> | FonctionsPersonnalitesSelect<true>;
+    histoires: HistoiresSelect<false> | HistoiresSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -163,12 +171,42 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  title: string;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "verreries".
  */
 export interface Verrery {
   id: number;
   nomPrincipal: string;
   slug: string;
+  statutActuel?:
+    | ('enActivite' | 'fermeeVestigesVisibles' | 'enRuines' | 'disparueSansVestiges' | 'convertie' | 'inconnu')
+    | null;
+  notesStatutVestiges?: string | null;
   nomsAlternatifs?:
     | {
         typeDeNom?: ('raisonSociale' | 'nomUsage' | 'nomMaitreVerrier' | 'nomLieuDit' | 'autre') | null;
@@ -177,9 +215,43 @@ export interface Verrery {
       }[]
     | null;
   /**
+   * Définissez la période d'activité principale de cet établissement verrier.
+   */
+  periodeVerriere?: {
+    /**
+     * Ex: "de 1780 à 1950 environ", "actif au XIXe siècle", "fondée vers 1750"
+     */
+    periodeActiviteTexte?: string | null;
+    anneeFondationApprox?: number | null;
+    anneeFermetureApprox?: number | null;
+    anneeDebutSort?: number | null;
+    moisDebutSort?: number | null;
+    typePrecisionDateDebut?: ('MoisAnneeExacts' | 'AnneeSeuleExacte' | 'CircaAnnee') | null;
+    anneeFinSort?: number | null;
+    moisFinSort?: number | null;
+    typePrecisionDateFin?: ('MoisAnneeExacts' | 'AnneeSeuleExacte' | 'CircaAnnee') | null;
+  };
+  /**
+   * Listez les différents noms et raisons sociales de la verrerie au fil du temps, avec leurs périodes.
+   */
+  nomsHistoriquesEtRaisonsSociales?:
+    | {
+        nom: string;
+        typeDeNom?: ('usage' | 'raison_sociale' | 'fondation' | 'populaire' | 'autre') | null;
+        /**
+         * Ex: "1749-1792", "vers 1880"
+         */
+        periodeValidite?: string | null;
+        anneeDebut?: number | null;
+        anneeFin?: number | null;
+        notes?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Personnalités ayant fondé cet établissement.
    */
-  fondateurs?: (number | Personnalite)[] | null;
+  fondateurs?: (number | Verrier)[] | null;
   dateDeCreation?: {
     datePreciseCreation?: string | null;
     descriptionDateCreation?: string | null;
@@ -188,21 +260,10 @@ export interface Verrery {
     datePreciseFermeture?: string | null;
     descriptionDateFermeture?: string | null;
   };
-  statutActuel?:
-    | (
-        | 'enActivite'
-        | 'fermeeDefinitivement'
-        | 'fermeeTemporairement'
-        | 'enRuines'
-        | 'disparueSansVestiges'
-        | 'convertie'
-      )
-    | null;
-  notesStatutVestiges?: string | null;
   /**
    * Sélectionnez ou créez le lieu où cette verrerie est (ou était) implantée.
    */
-  lieuPrincipal?: (number | null) | Lieux;
+  lieuPrincipal: number | Lieux;
   /**
    * Liez ici les personnalités (directeurs, etc.) et les verriers (ouvriers, artisans) avec leurs fonctions et périodes spécifiques à cette verrerie.
    */
@@ -257,20 +318,37 @@ export interface Verrery {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "personnalites".
+ * via the `definition` "verriers".
  */
-export interface Personnalite {
+export interface Verrier {
   id: number;
   nom: string;
   prenom?: string | null;
   /**
-   * Généré automatiquement si laissé vide, ou peut être saisi manuellement.
+   * Généré automatiquement à partir du prénom et du nom si laissé vide, ou peut être saisi manuellement.
    */
   nomComplet?: string | null;
-  slug?: string | null;
-  rolePrincipal: 'fondateur' | 'directeur' | 'maitre_verrerie' | 'proprietaire' | 'associe' | 'ingenieur' | 'autre';
   /**
-   * Ex: "vers 1750", "le 12/03/1810"
+   * Pour l'accord grammatical (Né/Née, etc.).
+   */
+  sexe?: ('M' | 'F') | null;
+  slug?: string | null;
+  /**
+   * Le rôle le plus significatif de cette personne, au-delà de ses fonctions techniques. Utile pour qualifier les 'personnalités'.
+   */
+  rolePrincipal?:
+    | (
+        | 'fondateur'
+        | 'maitre_verrerie'
+        | 'directeur'
+        | 'ingenieur_technicien'
+        | 'maitre_verrier_expertise'
+        | 'artiste_decorateur'
+        | 'autre'
+      )
+    | null;
+  /**
+   * Ex: "vers 1787", "le 12/03/1850", "avant 1800"
    */
   dateDeNaissance?: string | null;
   /**
@@ -278,14 +356,24 @@ export interface Personnalite {
    */
   lieuDeNaissance?: (number | null) | Lieux;
   /**
-   * Ex: "vers 1820", "le 01/10/1880"
+   * Ex: "vers 1820", "le 01/10/1899", "après 1870"
    */
   dateDeDeces?: string | null;
   /**
    * Sélectionnez le lieu de décès si connu.
    */
   lieuDeDeces?: (number | null) | Lieux;
-  biographie?: {
+  /**
+   * Année seulement, ex: 1855. Utile pour distinguer les homonymes.
+   */
+  anneeNaissance?: number | null;
+  /**
+   * Année seulement, ex: 1939.
+   */
+  anneeDeces?: number | null;
+  periodePrincipaleActivite?: string | null;
+  specialisation?: string | null;
+  notesBiographie?: {
     root: {
       type: string;
       children: {
@@ -300,6 +388,10 @@ export interface Personnalite {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Cochez cette case si cette personne est un de vos ancêtres directs.
+   */
+  ancetreDirect?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -309,6 +401,10 @@ export interface Personnalite {
  */
 export interface Lieux {
   id: number;
+  /**
+   * Catégorise le lieu pour faciliter les recherches et l'affichage.
+   */
+  typeDeLieu?: ('site_verrier' | 'siege_social' | 'habitation' | 'culte' | 'public' | 'autre') | null;
   nomDuLieu?: string | null;
   adresse?: string | null;
   /**
@@ -324,7 +420,7 @@ export interface Lieux {
    * Ex: Auvergne-Rhône-Alpes
    */
   region?: string | null;
-  pays: string;
+  pays: 'France' | 'Allemagne' | 'Suisse' | 'Italie';
   /**
    * Cliquez sur la carte pour définir le point, ou entrez manuellement longitude puis latitude.
    *
@@ -359,83 +455,61 @@ export interface Lieux {
  */
 export interface Engagement {
   id: number;
-  verrerie: number | Verrery;
   /**
-   * Sélectionnez une personnalité ou un verrier.
+   * Titre généré automatiquement pour l’admin.
    */
-  personneConcernee:
-    | {
-        relationTo: 'personnalites';
-        value: number | Personnalite;
-      }
-    | {
-        relationTo: 'verriers';
-        value: number | Verrier;
-      };
+  titreAdmin?: string | null;
+  verrerie: number | Verrery;
+  personneConcernee: number | Verrier;
   /**
    * Précise si l'engagement est un rôle de direction/propriété ou un métier d'artisan/ouvrier.
    */
   typeEngagement: 'role_personnalite' | 'metier_verrier';
-  /**
-   * Ex: "Directeur Technique", "Souffleur de verre à bouteilles", "Maître Verrier".
-   */
-  fonctionOuMetier: string;
-  /**
-   * Ex: "1880-1890", "vers 1905", "actif en 1870"
-   */
-  periodeActiviteTexte: string;
-  dateDebutEngagement?: string | null;
-  dateFinEngagement?: string | null;
+  fonctionVerrier?: (number | null) | FonctionsVerrier;
+  fonctionPersonnalite?: (number | null) | FonctionsPersonnalite;
+  dateDebutStructurée?: {
+    anneeDebutSort?: number | null;
+    moisDebutSort?: number | null;
+    typePrecisionDateDebut?:
+      | ('AnneeSeuleExacte' | 'CircaAnnee' | 'ApresAnnee' | 'AvantAnnee' | 'MoisAnneeExacts')
+      | null;
+  };
+  dateFinStructurée?: {
+    anneeFinSort?: number | null;
+    moisFinSort?: number | null;
+    typePrecisionDateFin?: ('AnneeSeuleExacte' | 'CircaAnnee' | 'ApresAnnee' | 'AvantAnnee' | 'MoisAnneeExacts') | null;
+  };
   descriptionEngagement?: string | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
+ * Liste des métiers spécifiques aux verriers (ouvriers, artisans).
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "verriers".
+ * via the `definition` "fonctions-verriers".
  */
-export interface Verrier {
+export interface FonctionsVerrier {
   id: number;
+  /**
+   * Exemple: Souffleur de verre, Gamin, Tiseur, etc.
+   */
   nom: string;
-  prenom?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Liste des rôles pour les personnalités (direction, cadres, etc.).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fonctions-personnalites".
+ */
+export interface FonctionsPersonnalite {
+  id: number;
   /**
-   * Généré automatiquement à partir du prénom et du nom si laissé vide, ou peut être saisi manuellement.
+   * Exemple: Directeur, Associé, Maître de verrerie (cadre), etc.
    */
-  nomComplet?: string | null;
-  slug?: string | null;
-  /**
-   * Ex: "vers 1787", "le 12/03/1850", "avant 1800"
-   */
-  dateDeNaissance?: string | null;
-  /**
-   * Sélectionnez le lieu de naissance si connu.
-   */
-  lieuDeNaissance?: (number | null) | Lieux;
-  /**
-   * Ex: "vers 1820", "le 01/10/1899", "après 1870"
-   */
-  dateDeDeces?: string | null;
-  /**
-   * Sélectionnez le lieu de décès si connu.
-   */
-  lieuDeDeces?: (number | null) | Lieux;
-  periodePrincipaleActivite?: string | null;
-  specialisation?: string | null;
-  notesBiographie?: {
-    root: {
-      type: string;
-      children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
+  nom: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -466,6 +540,76 @@ export interface TypesDeProduction {
   createdAt: string;
 }
 /**
+ * Enregistre les événements marquants de la vie d'une personne (naissance, mariage, décès, etc.).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "evenements-biographiques".
+ */
+export interface EvenementsBiographique {
+  id: number;
+  personneConcernee: number | Verrier;
+  typeEvenement: 'naissance' | 'bapteme' | 'mariage' | 'deces' | 'inhumation' | 'mention_acte' | 'autre';
+  /**
+   * Ex: "Le 12 mars 1850", "Vers 1788", "Au printemps 1820"
+   */
+  dateEvenementTexte?: string | null;
+  dateStructureeEvenement: {
+    anneeSort: number;
+    moisSort?: number | null;
+    jourSort?: number | null;
+    typePrecisionDate?:
+      | ('JourMoisAnneeExacts' | 'MoisAnneeExacts' | 'AnneeSeuleExacte' | 'CircaAnnee' | 'AvantDate' | 'ApresDate')
+      | null;
+  };
+  /**
+   * Sélectionnez le lieu où l'événement s'est produit.
+   */
+  lieu?: (number | null) | Lieux;
+  descriptionEvenement?: string | null;
+  titreEvenementPourAdmin?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Articles de fond, récits sur les dynasties, les régions, ou les aventures verrières.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "histoires".
+ */
+export interface Histoire {
+  id: number;
+  title: string;
+  typeArticle?: ('groupe_verreries' | 'aventure_verriere' | 'dynastie_verriere' | 'region_verriere') | null;
+  resume?: string | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Personnes clés mentionnées dans cette histoire. Elles apparaîtront dans un bloc dédié.
+   */
+  personnesLiees?: (number | Verrier)[] | null;
+  /**
+   * Verreries clés mentionnées. Elles pourront être affichées sur une carte contextuelle.
+   */
+  verreriesLiees?: (number | Verrery)[] | null;
+  imageMiseEnAvant?: (number | null) | Media;
+  slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
@@ -481,12 +625,12 @@ export interface PayloadLockedDocument {
         value: number | Media;
       } | null)
     | ({
-        relationTo: 'verreries';
-        value: number | Verrery;
+        relationTo: 'pages';
+        value: number | Page;
       } | null)
     | ({
-        relationTo: 'personnalites';
-        value: number | Personnalite;
+        relationTo: 'verreries';
+        value: number | Verrery;
       } | null)
     | ({
         relationTo: 'verriers';
@@ -501,8 +645,24 @@ export interface PayloadLockedDocument {
         value: number | Engagement;
       } | null)
     | ({
+        relationTo: 'evenements-biographiques';
+        value: number | EvenementsBiographique;
+      } | null)
+    | ({
         relationTo: 'lieux';
         value: number | Lieux;
+      } | null)
+    | ({
+        relationTo: 'fonctions-verriers';
+        value: number | FonctionsVerrier;
+      } | null)
+    | ({
+        relationTo: 'fonctions-personnalites';
+        value: number | FonctionsPersonnalite;
+      } | null)
+    | ({
+        relationTo: 'histoires';
+        value: number | Histoire;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -581,16 +741,53 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  content?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "verreries_select".
  */
 export interface VerreriesSelect<T extends boolean = true> {
   nomPrincipal?: T;
   slug?: T;
+  statutActuel?: T;
+  notesStatutVestiges?: T;
   nomsAlternatifs?:
     | T
     | {
         typeDeNom?: T;
         nom?: T;
+        id?: T;
+      };
+  periodeVerriere?:
+    | T
+    | {
+        periodeActiviteTexte?: T;
+        anneeFondationApprox?: T;
+        anneeFermetureApprox?: T;
+        anneeDebutSort?: T;
+        moisDebutSort?: T;
+        typePrecisionDateDebut?: T;
+        anneeFinSort?: T;
+        moisFinSort?: T;
+        typePrecisionDateFin?: T;
+      };
+  nomsHistoriquesEtRaisonsSociales?:
+    | T
+    | {
+        nom?: T;
+        typeDeNom?: T;
+        periodeValidite?: T;
+        anneeDebut?: T;
+        anneeFin?: T;
+        notes?: T;
         id?: T;
       };
   fondateurs?: T;
@@ -606,8 +803,6 @@ export interface VerreriesSelect<T extends boolean = true> {
         datePreciseFermeture?: T;
         descriptionDateFermeture?: T;
       };
-  statutActuel?: T;
-  notesStatutVestiges?: T;
   lieuPrincipal?: T;
   engagements?: T;
   typesDeProduction?: T;
@@ -632,38 +827,25 @@ export interface VerreriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "personnalites_select".
- */
-export interface PersonnalitesSelect<T extends boolean = true> {
-  nom?: T;
-  prenom?: T;
-  nomComplet?: T;
-  slug?: T;
-  rolePrincipal?: T;
-  dateDeNaissance?: T;
-  lieuDeNaissance?: T;
-  dateDeDeces?: T;
-  lieuDeDeces?: T;
-  biographie?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "verriers_select".
  */
 export interface VerriersSelect<T extends boolean = true> {
   nom?: T;
   prenom?: T;
   nomComplet?: T;
+  sexe?: T;
   slug?: T;
+  rolePrincipal?: T;
   dateDeNaissance?: T;
   lieuDeNaissance?: T;
   dateDeDeces?: T;
   lieuDeDeces?: T;
+  anneeNaissance?: T;
+  anneeDeces?: T;
   periodePrincipaleActivite?: T;
   specialisation?: T;
   notesBiographie?: T;
+  ancetreDirect?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -683,14 +865,49 @@ export interface TypesDeProductionSelect<T extends boolean = true> {
  * via the `definition` "engagements_select".
  */
 export interface EngagementsSelect<T extends boolean = true> {
+  titreAdmin?: T;
   verrerie?: T;
   personneConcernee?: T;
   typeEngagement?: T;
-  fonctionOuMetier?: T;
-  periodeActiviteTexte?: T;
-  dateDebutEngagement?: T;
-  dateFinEngagement?: T;
+  fonctionVerrier?: T;
+  fonctionPersonnalite?: T;
+  dateDebutStructurée?:
+    | T
+    | {
+        anneeDebutSort?: T;
+        moisDebutSort?: T;
+        typePrecisionDateDebut?: T;
+      };
+  dateFinStructurée?:
+    | T
+    | {
+        anneeFinSort?: T;
+        moisFinSort?: T;
+        typePrecisionDateFin?: T;
+      };
   descriptionEngagement?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "evenements-biographiques_select".
+ */
+export interface EvenementsBiographiquesSelect<T extends boolean = true> {
+  personneConcernee?: T;
+  typeEvenement?: T;
+  dateEvenementTexte?: T;
+  dateStructureeEvenement?:
+    | T
+    | {
+        anneeSort?: T;
+        moisSort?: T;
+        jourSort?: T;
+        typePrecisionDate?: T;
+      };
+  lieu?: T;
+  descriptionEvenement?: T;
+  titreEvenementPourAdmin?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -699,6 +916,7 @@ export interface EngagementsSelect<T extends boolean = true> {
  * via the `definition` "lieux_select".
  */
 export interface LieuxSelect<T extends boolean = true> {
+  typeDeLieu?: T;
   nomDuLieu?: T;
   adresse?: T;
   villeOuCommune?: T;
@@ -709,6 +927,40 @@ export interface LieuxSelect<T extends boolean = true> {
   coordonnees?: T;
   notesHistoriquesSurLeLieu?: T;
   nomCompletAffichage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fonctions-verriers_select".
+ */
+export interface FonctionsVerriersSelect<T extends boolean = true> {
+  nom?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "fonctions-personnalites_select".
+ */
+export interface FonctionsPersonnalitesSelect<T extends boolean = true> {
+  nom?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "histoires_select".
+ */
+export interface HistoiresSelect<T extends boolean = true> {
+  title?: T;
+  typeArticle?: T;
+  resume?: T;
+  content?: T;
+  personnesLiees?: T;
+  verreriesLiees?: T;
+  imageMiseEnAvant?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }

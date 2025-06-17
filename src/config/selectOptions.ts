@@ -16,5 +16,14 @@ export const rolePrincipalOptions: SelectOption[] = [
   { label: 'Autre', value: 'autre' },
 ];
 
+export const statutVerrerieOptions = [
+  { label: "En activité", value: "enActivite" },
+  { label: "Fermée, vestiges visibles", value: "fermeeVestigesVisibles" },
+  { label: 'En ruines', value: 'enRuines' },
+  { label: 'Disparue (sans vestiges visibles)', value: 'disparueSansVestiges' },
+  { label: 'Site converti (autre usage)', value: 'convertie' },
+  { label: "Inconnu", value: "inconnu" },
+];
+
 // Vous pourriez ajouter d'autres listes d'options ici à l'avenir
 // export const autreListeOptions: SelectOption[] = [ ... ];

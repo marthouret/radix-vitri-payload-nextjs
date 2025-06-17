@@ -1,65 +1,72 @@
 // src/app/page.tsx
+import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
 import MapLoader from '@/components/MapLoader'; 
 import MapAndFiltersClientWrapper from '@/components/MapAndFiltersClientWrapper';
+import SearchVerriers from '@/components/SearchVerriers';
+// Import des types nécessaires
+import type { Histoire as HistoireType } from '@/payload-types';
+import HistoireCard from '@/components/HistoireCard';
+import { VerrerieMapPoint, NomHistoriqueItem } from '@/types/verrerie';
+
 // ArticleContentRenderer n'est plus utilisé sur CETTE page si on simplifie les résumés
 // import ArticleContentRenderer from '@/components/ArticleContentRenderer';
 
-// --- Composants de Section (Placeholders pour l'instant) ---
+// --- Composants de Section ---
 const HeroSection = () => {
   return (
-    <section className="bg-blueGray-800 text-white py-16 md:py-24 text-center">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 tracking-tight">
-          Radix Vitri
-        </h1>
-        <p className="text-lg md:text-xl text-blueGray-300 max-w-3xl mx-auto">
-          Un catalogue des verreries, de leurs fondateurs et ouvriers, pour préserver la mémoire de cet artisanat et de mes ancêtres verriers.
+    <section className="py-16 md:py-20 lg:py-6 bg-cream text-blueGray-800"> {/* Ajustement du padding vertical */}
+      <div className="container mx-auto px-4 text-center"> {/* Contenu centré */}
+        
+        {/* Logo SVG Principal (agissant comme titre H1 visuel) */}
+        <div className="mb-6 max-w-2xl lg:max-w-3xl mx-auto"> {/* Contrôle de la largeur max du logo */}
+          <Image
+            src="/images/radixvitri-main-transparent.svg" // Chemin vers votre SVG
+            alt="Radix Vitri" // Texte alternatif essentiel pour l'accessibilité et SEO
+            width={800}  // Largeur de base (intrinsèque ou souhaitée) de votre SVG
+            height={150} // Hauteur correspondante pour maintenir le ratio (adaptez ces valeurs !)
+            className="inline-block w-full" // Prend la largeur de son conteneur, hauteur auto
+            priority 
+          />
+          {/* Pour la sémantique H1, si le SVG ne contient pas de texte accessible : */}
+          {/* <h1 className="sr-only">Radix Vitri</h1> */}
+        </div>
+
+        {/* Accroche */}
+        <p className="text-xl lg:text-2xl text-gold mb-8 font-sans max-w-3xl mx-auto">
+          Un hommage à nos ancêtres verriers et à leur histoire.
         </p>
+
+        {/* Introduction */}
+        <div className="prose prose-bluegray lg:prose-lg max-w-2xl mx-auto text-blueGray-700 font-sans mb-10 text-center sm:text-left md:pl-4 lg:pl-12">
+          {/* J'ai remis text-center sur mobile et text-left à partir de sm pour les paragraphes */}
+          <p>
+            Radix Vitri est un hommage à mes ancêtres verriers. Ce catalogue interactif vous invite à découvrir les nombreux établissements où, du XVIIe siècle à l'aube de la Première Guerre Mondiale, ces artisans du verre – qu'ils soient souffleurs, composeurs, tamiseurs, graveurs ou peintres sur verre – exercèrent leurs précieux talents.
+          </p>
+          <p>
+            Explorez avec nous l'évolution de ces lieux oubliés de savoir-faire : des verreries forestières éphémères, dévoreuses de bois, aux premières grandes manufactures prestigieuses, jusqu'à l'essor de l'industrie verrière transformée par le charbon puis la mécanisation.
+          </p>
+        </div>
+        
+        {/* Bouton CTA */}
+        <Link href="/verreries">
+          <button
+            type="button"
+            className="bg-everglade hover:bg-everglade-clear text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-lg"
+          >
+            Explorer le Catalogue
+          </button>
+        </Link>
       </div>
     </section>
   );
 };
 
-const CatalogueTeaser = () => {
-  return (
-    <section className="py-12 md:py-16 bg-cream">
-      <div className="container mx-auto px-4 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-blueGray-800 mb-4 font-serif">
-          Découvrez le catalogue des verreries
-        </h2>
-        <p className="text-blueGray-600 mb-8 max-w-2xl mx-auto font-sans">
-          Explorez l&apos;histoire des usines de la vallée du Gier, de Lyon et d&apos;ailleurs, avec des détails sur leurs productions et acteurs.
-        </p>
-        <button
-          type="button"
-          className="bg-everglade hover:bg-everglade-clear text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 text-lg" // Correction: hover:scale-105 au lieu de hover:scale-
-        >
-          Explorer le catalogue
-        </button>
-      </div>
-    </section>
-  );
-};
-
-interface VerrerieMapPoint {
-  id: string;
-  slug: string;
-  nomPrincipal: string;
-  nomsAlternatifs?: string[];
-  coordonnees: [number, number]; // [longitude, latitude]
-  villeOuCommune?: string; // Optionnel, pour la popup
-  region?: string; // Champ nécessaire uniquement pour les filtres de recherche, pas pour la carte dynamique
-}
-
-async function getVerreriesForMap(): Promise<VerrerieMapPoint[]> {
+async function getVerreriesForMap(): Promise<VerrerieMapPoint[]> { // VerrerieMapPoint est l'interface attendue par votre ClientWrapper
   try {
-    // On veut les verreries qui ont des coordonnées.
-    // depth=1 devrait suffire pour populer lieuPrincipal.coordonnees
-    // Il faut peut-être ajuster le filtre si lieuPrincipal peut ne pas avoir de coordonnées.
     const apiUrl = `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/verreries?limit=300&depth=1&where[lieuPrincipal.coordonnees][exists]=true`;
-    const response = await fetch(apiUrl, { cache: 'no-store' }); // Ou 'force-cache' ou options de revalidation
+    const response = await fetch(apiUrl, { cache: 'no-store' });
     if (!response.ok) {
       console.error(`[getVerreriesForMap] Erreur API (${response.status}): ${await response.text()}`);
       return [];
@@ -67,34 +74,37 @@ async function getVerreriesForMap(): Promise<VerrerieMapPoint[]> {
     const data = await response.json();
 
     return data.docs
-      .map((doc: any): VerrerieMapPoint | null => {
-        // S'assurer que lieuPrincipal est un objet et a des coordonnées
+      .map((doc: any): VerrerieMapPoint | null => { // 'doc' est un document Verrerie brut de Payload
         if (doc.lieuPrincipal && typeof doc.lieuPrincipal === 'object' && doc.lieuPrincipal.coordonnees) {
-          let mappedNomsAlternatifs: string[] = []; // Initialiser comme un tableau vide
-          if (doc.nomsAlternatifs && Array.isArray(doc.nomsAlternatifs)) { // Gestion du tableau de noms alternatifs (peut être un tableau vide)
-            mappedNomsAlternatifs = doc.nomsAlternatifs
-              .map((altObj: any) => {
-                // S'assurer que altObj est un objet et a une propriété 'nom' de type string
-                if (altObj && typeof altObj.nom === 'string') {
-                  return altObj.nom;
-                }
-                return null; // Retourner null pour les éléments non conformes
-              })
-              .filter((nom: string | null): nom is string => nom !== null); // Filtrer les nulls pour ne garder que les chaînes valides
-          }
+          
+          // Récupérer directement nomsHistoriquesEtRaisonsSociales
+          // C'est un champ de premier niveau de la collection "Verreries", donc depth=0 (ou 1) suffit.
+          // Il est déjà un tableau d'objets, chaque objet ayant une propriété 'nom'.
+          const nomsHistoriques = doc.nomsHistoriquesEtRaisonsSociales || []; // Assurer que c'est un tableau, même vide
+
           return {
             id: doc.id,
             slug: doc.slug,
             nomPrincipal: doc.nomPrincipal,
-            nomsAlternatifs: mappedNomsAlternatifs, // Utiliser la version mappée
             coordonnees: doc.lieuPrincipal.coordonnees,
-            villeOuCommune: doc.lieuPrincipal.villeOuCommune,
-            region: doc.lieuPrincipal.region,
+            villeOuCommune: doc.lieuPrincipal.villeOuCommune, // Vérifiez si ce champ existe sur lieuPrincipal
+            region: doc.lieuPrincipal.region,               // Vérifiez si ce champ existe sur lieuPrincipal
+            pays: doc.lieuPrincipal.pays,
+            
+            // Transmettre le champ correctement
+            nomsHistoriquesEtRaisonsSociales: nomsHistoriques.map((nh: any) => ({ nom: nh.nom })), 
+            // On s'assure ici de ne passer que la structure minimale { nom: string }
+            // si VerrerieMapPoint.nomsHistoriquesEtRaisonsSociales attend cela.
+            // Si VerrerieMapPoint.nomsHistoriquesEtRaisonsSociales peut prendre l'objet complet de l'array (avec typeDeNom, periodeValidite etc.),
+            // alors vous pouvez juste faire : nomsHistoriquesEtRaisonsSociales: nomsHistoriques,
+
+            // L'ancien champ 'nomsAlternatifs' (string[]) n'est plus nécessaire ici
+            // si VerrerieMapPoint ne l'attend plus et utilise nomsHistoriquesEtRaisonsSociales
           };
         }
         return null;
       })
-      .filter((item: VerrerieMapPoint | null): item is VerrerieMapPoint => item !== null); // Filtrer les nulls
+      .filter((item : VerrerieMapPoint | null): item is VerrerieMapPoint => item !== null);
   } catch (error) {
     console.error('[getVerreriesForMap] Exception:', error);
     return [];
@@ -106,7 +116,7 @@ const MapAndFiltersSection = async () => {
   console.log('Verreries récupérées pour la carte (serveur):', JSON.stringify(verreriesForMap.slice(0, 5), null, 2)); // Affiche les 5 premiers pour la lisibilité
 
   return (
-    <section className="py-12 md:py-16 bg-white">
+    <section id="carte-interactive" className="py-12 md:py-16 bg-white">
       <div className="container mx-auto px-4">
         {/*
           ICI : Nous appelons MapAndFiltersClientWrapper.
@@ -121,6 +131,16 @@ const MapAndFiltersSection = async () => {
     </section>
   );
 };
+
+const SearchVerriersSection = () => {
+  return (
+    <section className="py-12 md:py-16 bg-cream"> {/* ou une autre couleur de fond pour la distinguer */}
+      <div className="container mx-auto px-4">
+        <SearchVerriers />
+      </div>
+  </section>
+  );
+}
 
 // --- FeaturedVerreries ---
 interface FeaturedVerrerieType {
@@ -202,7 +222,7 @@ const FeaturedVerreries = async () => {
 
   if (!verreries || verreries.length === 0) {
     return (
-      <section className="py-12 md:py-16 bg-cream">
+      <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-blueGray-800 mb-10 font-serif">
             À découvrir
@@ -214,7 +234,7 @@ const FeaturedVerreries = async () => {
   }
 
   return (
-    <section className="py-12 md:py-16 bg-cream">
+    <section className="py-12 md:py-16 bg-white">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-blueGray-800 mb-10 text-center font-serif">
           Quelques verreries à découvrir
@@ -292,15 +312,66 @@ const ContactFormSection = () => {
   );
 };
 
+interface HistoirePourCarte {
+  id: string;
+  slug?: string | null;
+  title: string;
+  resume?: string | null;
+  imageMiseEnAvant?: {
+    url?: string | null;
+    alt?: string | null;
+  } | null;
+}
+
+async function getHistoiresRecentes(): Promise<HistoirePourCarte[]> {
+  try {
+    const apiUrl = `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/histoires?sort=-updatedAt&limit=3&depth=1`;
+    const response = await fetch(apiUrl, { cache: 'no-store' });
+
+    if (!response.ok) {
+      console.error(`[getHistoiresRecentes] Erreur API (${response.status}): ${await response.text()}`);
+      return [];
+    }
+    const data = await response.json();
+    
+    // On s'assure que les données retournées correspondent à notre type simplifié
+    return data.docs as HistoirePourCarte[];
+
+  } catch (error) {
+    console.error('[getHistoiresRecentes] Exception:', error);
+    return [];
+  }
+}
+
+const HistoiresSection = async () => {
+  const histoires = await getHistoiresRecentes();
+  if (histoires.length === 0) return null;
+
+  return (
+    <section className="py-12 md:py-16 bg-cream">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl md:text-4xl font-bold text-blueGray-800 mb-10 text-center font-serif">
+          Dernières Histoires
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {histoires.map(histoire => (
+            <HistoireCard key={histoire.id} histoire={histoire} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 // --- Composant Page Principal ---
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-cream">
       <HeroSection />
-      <CatalogueTeaser />
       <MapAndFiltersSection />
+      <SearchVerriersSection />
       <FeaturedVerreries />
-      <ContactFormSection />
+      <HistoiresSection />
     </main>
   );
 }

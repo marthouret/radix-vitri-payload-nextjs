@@ -9,6 +9,7 @@ const TypeDeProduction: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'nom',
+    group: 'Verreries',
   },
   fields: [
     {

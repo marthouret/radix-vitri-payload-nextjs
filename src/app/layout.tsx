@@ -1,7 +1,11 @@
 // src/app/layout.tsx
+import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
-import { Playfair_Display, Lato } from 'next/font/google'; // Import des polices
+import { Playfair_Display, Lato, Limelight } from 'next/font/google';
 import './globals.css'; 
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 // Configuration de la police Playfair Display (pour les titres et le corps serif)
 const playfairDisplay = Playfair_Display({
@@ -21,8 +25,19 @@ const lato = Lato({
   display: 'swap',
 });
 
+const limelight = Limelight({
+  subsets: ['latin'],
+  weight: ['400'], // Limelight n'a qu'une seule graisse (Regular 400)
+  style: ['normal'],
+  variable: '--font-limelight',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'Radix Vitri - Histoire des Verreries', 
+  title: {
+    template: '%s | Radix Vitri', // %s sera remplacé par le titre de la page enfant
+    default: 'Radix Vitri - Histoire des Verreries et des Verriers', // Titre si une page enfant ne spécifie rien
+  },
   description: 'Découvrez l\'histoire des verreries et des verriers.', 
 };
 
@@ -32,13 +47,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={`${playfairDisplay.variable} ${lato.variable} font-serif`}>
+    <html lang="fr" className={`${playfairDisplay.variable} ${lato.variable} ${limelight.variable} font-serif`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body>
+      <body className="bg-cream"> {/* Applique bg-cream au body : fond général */}
+        <Header /> 
         {children}
+        <Footer />
       </body>
     </html>
   );

@@ -1,3 +1,4 @@
+// src/collections/Lieu.ts
 import { CollectionConfig } from 'payload';
 
 const Lieu: CollectionConfig = {
@@ -7,14 +8,33 @@ const Lieu: CollectionConfig = {
     plural: 'Lieux',
   },
   admin: {
-    useAsTitle: 'nomCompletAffichage', // Champ virtuel pour un meilleur affichage dans l'admin
-    defaultColumns: ['nomCompletAffichage', 'villeOuCommune', 'departement', 'region', 'pays'],
+    useAsTitle: 'nomDuLieu', // Champ virtuel pour un meilleur affichage dans l'admin
+    defaultColumns: ['nomDuLieu', 'villeOuCommune', 'typeDeLieu', 'updatedAt'],
     group: 'Géographie', // Pour organiser vos collections dans l'admin
   },
   access: {
     read: () => true, // Ouvert en lecture par défaut
   },
   fields: [
+    {
+      name: 'typeDeLieu',
+      label: 'Type de Lieu',
+      type: 'select',
+      hasMany: false, // Par défaut, un seul choix est possible
+      options: [
+        { label: "Site de Verrerie", value: "site_verrier" },
+        { label: "Siège Social", value: "siege_social" },
+        { label: "Lieu d'habitation", value: "habitation" },
+        { label: "Lieu de culte (église, etc.)", value: "culte" },
+        { label: "Bâtiment public (mairie, etc.)", value: "public" },
+        { label: "Autre", value: "autre" },
+      ],
+      defaultValue: 'autre', // Optionnel, mais recommandé pour les enregistrements existants/nouveaux
+      admin: {
+        position: 'sidebar',
+        description: 'Catégorise le lieu pour faciliter les recherches et l\'affichage.',
+      }
+    },
     {
       name: 'nomDuLieu',
       label: 'Nom spécifique du lieu (hameau, quartier, lieu-dit)',
@@ -61,9 +81,18 @@ const Lieu: CollectionConfig = {
     {
       name: 'pays',
       label: 'Pays',
-      type: 'text',
-      defaultValue: 'France',
+      type: 'select',
       required: true,
+      options: [
+        { label: 'France', value: 'France' },
+        { label: 'Allemagne', value: 'Allemagne' },
+        { label: 'Suisse', value: 'Suisse' },
+        { label: 'Italie', value: 'Italie' },
+      ],
+      defaultValue: 'France',
+      admin: {
+        position: 'sidebar',
+      }
     },
     {
       name: 'coordonnees',

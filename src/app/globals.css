@@ -2,3 +2,52 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Frise : CSS pour la page Verrier */
+.rc-card h3 a:hover,
+.rc-card .rc-card-title a { /* Adaptez le sélecteur après inspection du DOM */
+  color: #DAA520; /* Votre couleur 'gold' */
+}
+.rc-card h3 a:hover,
+.rc-card .rc-card-title a:hover {
+  color: #b8860b; /* Un 'gold' plus foncé pour le hover */
+}
+header.card-content-wrapper span,
+.rc-card .rc-card-title { /* Adaptez le sélecteur après inspection du DOM */
+  color: #DAA520 !important; /* Votre couleur 'gold' */
+}
+
+/* 1. Conteneur média principal fourni par react-chrono */
+div.rc-card-media {
+  display: flex !important; /* Pour mieux contrôler l'alignement de l'enfant */
+  flex-direction: column !important; /* Si le div interne doit prendre toute la place */
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important; /* Très important pour cacher ce qui dépasse */
+  /* Donnons-lui une hauteur explicite, plus petite que cardHeight */
+  /* Ajustez cette valeur en fonction de votre cardHeight et de l'espace voulu pour le texte */
+  height: 130px !important;  /* Exemple : si cardHeight est 200px, ceci laisse de la place */
+  padding: 0 !important; /* Enlève le padding qui pourrait exister */
+  background-color: #f8f8f8; /* Optionnel : pour visualiser la zone pendant le débogage */
+}
+
+/* 2. Cible le PREMIER <div> enfant direct de rc-card-media (celui qui a le position:relative) */
+div.rc-card-media > div:first-child {
+  position: static !important;  /* On annule le position:relative problématique ! */
+  width: 100% !important;       /* On s'assure qu'il prend toute la largeur disponible */
+  height: 100% !important;      /* On s'assure qu'il prend toute la hauteur de son parent (rc-card-media) */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 3. L'image elle-même, à l'intérieur de ce div interne */
+div.rc-card-media > div:first-child > img {
+  display: block !important;
+  max-width: 100%;           /* L'image ne dépasse pas la largeur de son conteneur */
+  max-height: 100%;          /* L'image ne dépasse pas la hauteur de son conteneur */
+  width: auto;               /* Garde le ratio, s'ajuste à la hauteur ou largeur contrainte */
+  height: auto;              /* Garde le ratio */
+  object-fit: cover !important; /* Assure que l'image entière est visible et son ratio préservé */
+                                 /* Si vous préférez remplir et rogner : object-fit: cover !important; */
+}

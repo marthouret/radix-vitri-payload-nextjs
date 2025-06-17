@@ -16,6 +16,22 @@ interface MediaItem {
   alt?: string; 
 }
 
+// Interface LieuType (déjà définie pour VerrierPage, plus tard : à centraliser)
+interface LieuType {
+  id: string;
+  nomDuLieu?: string;
+  adresse?: string;
+  villeOuCommune?: string;
+  codePostal?: string;
+  departement?: string;
+  region?: string;
+  pays?: string;
+  coordonnees?: [number, number];
+  nomCompletAffichage?: string; // Celui-ci est bien pour l'affichage
+  slug?: string;
+  // notesHistoriquesSurLeLieu?: any; // Si vous l'avez sur LieuType
+}
+
 interface PersonnaliteDetailType {
   id: string | number;
   nom?: string; 
@@ -24,10 +40,13 @@ interface PersonnaliteDetailType {
   rolePrincipal?: string; // La valeur stockée, ex: "maitre_verrier"
   slug?: string; 
   dateDeNaissance?: string | null; 
-  lieuDeNaissance?: string | null;
+  lieuDeNaissance?: LieuType | string | null;
   dateDeDeces?: string | null;   
-  lieuDeDeces?: string | null;
+  lieuDeDeces?: LieuType | string | null;
   biographie?: any; 
+  anneeNaissance?: number;
+  anneeDeces?: number;
+  sexe?: 'M' | 'F';
 }
 
 interface PersonnalitePageProps {
@@ -120,23 +139,35 @@ const ArticleContentRenderer: React.FC<{ content: any }> = ({ content }) => {
 // --- Fonction de Récupération des Données ---
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
+const displayLieu = (lieu: LieuType | string | undefined | null): React.ReactNode => {
+  if (!lieu) return <span className="italic">Non renseigné</span>;
+  if (typeof lieu === 'string') return <span className="italic">Lieu (ID: {lieu})</span>;
+  return <>{lieu.nomCompletAffichage || lieu.villeOuCommune || `ID: ${lieu.id}`}</>;
+};
+
 async function getPersonnalite(slug: string): Promise<PersonnaliteDetailType | null> { 
   try {
+    // depth=1 devrait suffire pour peupler les champs relationnels directs comme lieuDeNaissance/lieuDeDeces
     const apiUrl = `${payloadUrl}/api/personnalites?where[slug][equals]=${slug}&depth=1&locale=fr&fallback-locale=fr&limit=1`;
     const response = await fetch(apiUrl, { cache: 'no-store' }); 
     if (!response.ok) { 
       console.error(`[getPersonnalite] Erreur API Payload (${response.status}): ${await response.text()}`);
-      throw new Error(`Failed to fetch personnalite: ${response.status}`); 
+      // Ne pas throw ici pour pouvoir retourner null et gérer avec notFound() plus proprement
+      return null; 
     }
     const data = await response.json(); 
     if (data.docs && data.docs.length > 0) {
-      return data.docs[0] as PersonnaliteDetailType;
+      const personnalite = data.docs[0] as PersonnaliteDetailType;
+      // Avec depth=1, lieuDeNaissance et lieuDeDeces devraient être des objets LieuType s'ils sont liés,
+      // ou null/undefined s'il n'y a pas de lien, ou un ID string si la relation est là mais pas peuplée (moins probable avec depth=1).
+      // La vérification typeof === 'object' dans displayLieu gérera cela.
+      return personnalite;
     } else {
       console.warn(`[getPersonnalite] Aucune personnalité trouvée pour le slug: ${slug}`);
       return null;
     }
   } catch (error) { 
-    console.error("[getPersonnalite]", error); 
+    console.error("[getPersonnalite] Erreur de récupération :", error); 
     return null; 
   }
 }
@@ -189,7 +220,7 @@ export default async function PersonnalitePage({ params }: PersonnalitePageProps
                   {personnalite.lieuDeNaissance && (
                     <div>
                       <dt className="font-medium text-blueGray-500">À :</dt>
-                      <dd className="ml-1">{personnalite.lieuDeNaissance}</dd>
+                      <dd className="ml-1">{displayLieu(personnalite.lieuDeNaissance)}</dd>
                     </div>
                   )}
                   {personnalite.dateDeDeces && (
@@ -201,7 +232,7 @@ export default async function PersonnalitePage({ params }: PersonnalitePageProps
                   {personnalite.lieuDeDeces && (
                     <div>
                       <dt className="font-medium text-blueGray-500">À :</dt>
-                      <dd className="ml-1">{personnalite.lieuDeDeces}</dd>
+                      <dd className="ml-1">{displayLieu(personnalite.lieuDeDeces)}</dd>
                     </div>
                   )}
                 </dl>
