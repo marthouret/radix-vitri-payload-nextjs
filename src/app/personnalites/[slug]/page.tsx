@@ -43,12 +43,6 @@ interface PersonnaliteDetailType {
   sexe?: 'M' | 'F';
 }
 
-interface PersonnalitePageProps {
-  params: {
-    slug: string;
-  };
-}
-
 // --- Fonctions Utilitaires ---
 const formatDateForDisplay = (dateString?: string | null): string => {
   if (!dateString) return 'Date inconnue';

@@ -1,5 +1,4 @@
 // src/components/VerrerieMap.tsx
-'use client';
 import React, { useEffect, useRef } from 'react'; // Ajout de useEffect
 import 'leaflet/dist/leaflet.css';
 import L, { LatLngExpression, Map as LeafletMap, LatLngBoundsLiteral } from 'leaflet'; // Ajout de LatLngBoundsLiteral
@@ -22,7 +21,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-interface VerrerieMapProps {
+export interface VerrerieMapProps {
   points: MapPoint[]; // Maintenant un tableau de points
   // center?: [number, number]; // Optionnel, on peut le calculer
   defaultZoomLevel?: number; // Zoom par défaut si un seul point ou si pas de fitBounds

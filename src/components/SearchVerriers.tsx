@@ -1,5 +1,4 @@
 // src/components/SearchVerriers.tsx
-
 "use client"; // On déclare ce composant comme interactif
 
 import { useState } from 'react';

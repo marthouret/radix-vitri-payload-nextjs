@@ -4,7 +4,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import MapLoader from '@/components/MapLoader'; 
+import VerrerieMap from '@/components/VerrerieMapClientWrapper';
 import { MapPoint } from '@/types/map'; 
 import PersonneCard from '@/components/PersonneCard';
 import ArticleContentRenderer from '@/components/ArticleContentRenderer';
@@ -12,8 +12,6 @@ import TruncatedText from '@/components/TruncatedText';
 import GalerieVerrerie from '@/components/GalerieVerrerie';
 import { statutVerrerieOptions } from '@/config/selectOptions';
 import { formatPeriode, type DateDebut, type DateFin } from '@/utils/formatters';
-
-export const dynamic = 'force-dynamic';
 
 // --- Définitions des Interfaces ---
 // Sous-types pour VerrerieType
@@ -727,7 +725,7 @@ export default async function VerreriePage({ params }: { params: any }) {
                   <div className="mt-5">
                     <strong className="font-bold font-sans text-blueGray-700 block mb-2">Localisation :</strong>
                     <div className="h-48 rounded-lg overflow-hidden border border-blueGray-200"> {/* Hauteur réduite à h-48 */}
-                      <MapLoader
+                      <VerrerieMap
                         points={verreriePourLaCarte}
                         disableMapAnimation={true}
                       />

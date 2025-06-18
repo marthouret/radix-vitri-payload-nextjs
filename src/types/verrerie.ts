@@ -15,3 +15,25 @@ export interface VerrerieMapPoint extends MapPoint {
   pays: string;
   nomsHistoriquesEtRaisonsSociales?: NomHistoriqueItem[];
 }
+
+export interface FeaturedVerrerieType {
+  id: string;
+  slug: string;
+  nomPrincipal: string;
+  resumeOuExtrait?: string;
+  imageEnAvant?: {
+    url?: string;
+    alt?: string;
+  };
+}
+
+export interface VerreriePourCarte {
+  id: string;
+  slug?: string | null;
+  nomPrincipal: string;
+  resumeOuExtrait?: string | null;
+  imageEnAvant?: {
+    url?: string | null;
+    alt?: string | null;
+  } | null;
+}

@@ -45,7 +45,7 @@ const PersonneCard: React.FC<PersonneCardProps> = ({ personne, engagements }) =>
   }
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md border border-blueGray-100 h-full">
+  <div className="bg-white p-4 rounded-lg shadow-md border border-blueGray-100 h-full flex flex-col">
       <h4 className="font-semibold text-blueGray-800 font-serif leading-tight mb-2">
         <Link
           href={personne.slug ? `/verriers/${personne.slug}` : '#'}

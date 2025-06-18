@@ -202,6 +202,8 @@ export interface Page {
 export interface Verrery {
   id: number;
   nomPrincipal: string;
+  resumeOuExtrait?: string | null;
+  imageEnAvant?: (number | null) | Media;
   slug: string;
   statutActuel?:
     | ('enActivite' | 'fermeeVestigesVisibles' | 'enRuines' | 'disparueSansVestiges' | 'convertie' | 'inconnu')
@@ -756,6 +758,8 @@ export interface PagesSelect<T extends boolean = true> {
  */
 export interface VerreriesSelect<T extends boolean = true> {
   nomPrincipal?: T;
+  resumeOuExtrait?: T;
+  imageEnAvant?: T;
   slug?: T;
   statutActuel?: T;
   notesStatutVestiges?: T;

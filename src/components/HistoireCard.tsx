@@ -2,18 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-
-// On utilise le même type simplifié que dans la page d'accueil
-interface HistoirePourCarte {
-  id: string;
-  slug?: string | null;
-  title: string;
-  resume?: string | null;
-  imageMiseEnAvant?: {
-    url?: string | null;
-    alt?: string | null;
-  } | null;
-}
+import type { HistoirePourCarte } from '@/types/HistoirePourCarte';
 
 const HistoireCard = ({ histoire }: { histoire: HistoirePourCarte }) => {
   const link = `/histoires/${histoire.slug}`;

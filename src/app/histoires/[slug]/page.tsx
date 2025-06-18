@@ -5,10 +5,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { Histoire as HistoireType, Verrier as VerrierType, Verrery as VerrerieType } from '@/payload-types';
 import ArticleContentRenderer from '@/components/ArticleContentRenderer';
-import MapLoader from '@/components/MapLoader';
+import VerrerieMap from '@/components/VerrerieMapClientWrapper';
 import type { MapPoint } from '@/types/map';
-
-export const dynamic = 'force-dynamic';
 
 const payloadUrl = process.env.NEXT_PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
 
@@ -98,7 +96,7 @@ export default async function HistoirePage({ params }: { params: any }) {
                 <div className="bg-white p-6 rounded-lg shadow-md border">
                   <h3 className="text-xl font-semibold text-blueGray-800 mb-4 font-serif">Lieux Mentionnés</h3>
                   <div className="h-64 rounded-md overflow-hidden border">
-                    <MapLoader points={mapPoints} />
+                    <VerrerieMap points={mapPoints} />
                   </div>
                 </div>
               )}

@@ -1,6 +1,5 @@
 // src/components/TimelineClient.tsx
-"use client";
-
+'use client';
 import React from 'react';
 import dynamic from 'next/dynamic';
 

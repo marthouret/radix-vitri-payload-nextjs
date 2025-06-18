@@ -3,13 +3,11 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import React from 'react';
 import Link from 'next/link';
-import MapLoader from '@/components/MapLoader'; 
+import VerrerieMap from '@/components/VerrerieMapClientWrapper';
 import TimelineClient from '@/components/TimelineClient';
 import { MapPoint, type EngagementDetailForPopup } from '@/types/map';
 import ArticleContentRenderer from '@/components/ArticleContentRenderer'; 
 import { formatPeriode, type DateDebut, type DateFin } from '@/utils/formatters';
-
-export const dynamic = 'force-dynamic';
 
 // --- Définitions des Interfaces ---
 interface EvenementBiographiqueFromAPI {
@@ -552,7 +550,7 @@ export default async function VerrierPage({ params }: { params: any }) {
           <section id="parcours-professionnel" className="mt-12">
             {mapPointsEngagement.length > 0 ? (
               <div className="h-[450px] md:h-[550px] lg:h-[600px] bg-gray-200 rounded-lg shadow-md max-w-5xl mx-auto"> {/* Hauteur augmentée et largeur max pour centrer */}
-                <MapLoader 
+                <VerrerieMap 
                   points={mapPointsEngagement} 
                   defaultZoomLevel={5}
                   singlePointZoomLevel={13}

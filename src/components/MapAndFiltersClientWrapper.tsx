@@ -3,8 +3,14 @@
 import Link from 'next/link';
 import { Combobox } from '@headlessui/react';
 import React, { useState, useMemo, useEffect, Fragment } from 'react';
-import MapLoader from '@/components/MapLoader';
 import { VerrerieMapPoint } from '@/types/verrerie';
+import dynamic from 'next/dynamic';
+import type { VerrerieMapProps } from '@/components/VerrerieMap';
+
+const VerrerieMap = dynamic<VerrerieMapProps>(
+  () => import('@/components/VerrerieMap').then(mod => mod.default),
+  { ssr: false, loading: () => <div className="w-full h-full bg-blueGray-200 animate-pulse" /> }
+);
   
 interface MapAndFiltersClientWrapperProps {
   initialVerreries: VerrerieMapPoint[];
@@ -231,7 +237,7 @@ const filteredVerreriesForComboboxOptions = useMemo((): ComboBoxOption[] => {
         <div className="bg-blueGray-100 rounded-lg shadow border border-blueGray-200 flex-grow min-h-[450px] md:min-h-[500px] lg:min-h-[600px] flex items-center justify-center text-blueGray-500 relative overflow-hidden">
           <div className="absolute inset-0">
             {filteredVerreriesForMap.length > 0 ? (
-              <MapLoader points={filteredVerreriesForMap} />
+              <VerrerieMap points={filteredVerreriesForMap} />
             ) : (
               <span className="italic p-4">Aucune verrerie ne correspond à vos critères.</span>
             )}

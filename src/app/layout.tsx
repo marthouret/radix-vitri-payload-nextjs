@@ -4,6 +4,7 @@ import { Playfair_Display, Lato, Limelight } from 'next/font/google';
 import './globals.css'; 
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { getFooterPages } from '@/lib/getFooterPages';
 
 // Configuration de la police Playfair Display (pour les titres et le corps serif)
 const playfairDisplay = Playfair_Display({
@@ -39,21 +40,14 @@ export const metadata: Metadata = {
   description: 'Découvrez l\'histoire des verreries et des verriers.', 
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const footerPages = await getFooterPages();
   return (
-    <html lang="fr" className={`${playfairDisplay.variable} ${lato.variable} ${limelight.variable} font-serif`}>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body className="bg-cream"> {/* Applique bg-cream au body : fond général */}
-        <Header /> 
-        {children}
-        <Footer />
+    <html lang="fr">
+      <body>
+        <Header />
+        <main>{children}</main>
+        <Footer footerPages={footerPages} />
       </body>
     </html>
   );
