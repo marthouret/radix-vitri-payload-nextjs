@@ -1,0 +1,57 @@
+name: Radix Vitri CI
+
+on:
+  push:
+    branches: [ "main", "develop" ] # Se déclenche quand on pousse sur main ou develop
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      # On nomme le service 'postgres'
+      postgres:
+        # On utilise une image Docker officielle de PostgreSQL
+        image: postgres:15
+        # Variables d'environnement pour créer la base de données temporaire
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dummy_db
+        # Options pour s'assurer que la base de données est prête avant de continuer
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # On lie le port 5432 du conteneur au port 5432 de la machine virtuelle
+          - 5432:5432
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Run Production Build
+        run: pnpm build
+        env:
+          # On utilise des secrets pour les variables d'environnement
+          DATABASE_URI: ${{ secrets.DUMMY_DATABASE_URI }}
+          PAYLOAD_SECRET: ${{ secrets.DUMMY_PAYLOAD_SECRET }}
+          NEXT_PUBLIC_PAYLOAD_URL: http://localhost:3000
