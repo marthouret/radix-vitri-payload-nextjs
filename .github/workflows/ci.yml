@@ -10,6 +10,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      # On nomme le service 'postgres'
+      postgres:
+        # On utilise une image Docker officielle de PostgreSQL
+        image: postgres:15
+        # Variables d'environnement pour créer la base de données temporaire
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dummy_db
+        # Options pour s'assurer que la base de données est prête avant de continuer
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # On lie le port 5432 du conteneur au port 5432 de la machine virtuelle
+          - 5432:5432
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
