@@ -390,8 +390,10 @@ async function getVerrier(slug: string): Promise<VerrierFromAPI | null> {
   }
 }
 
-export async function generateMetadata({ params }: { params: any }): Promise<Metadata> {
-  const verrier = await getVerrier(params.slug); // Récupérer les données pour le titre et les autres infos.
+export async function generateMetadata(props: { params: any }): Promise<Metadata> {
+  const { params } = await props;
+  const awaitedParams = await params;
+  const verrier = await getVerrier(awaitedParams.slug);
 
   if (!verrier) {
     return {
@@ -407,9 +409,10 @@ export async function generateMetadata({ params }: { params: any }): Promise<Met
 }
 
 // --- Composant de Page ---
-export default async function VerrierPage({ params }: { params: any }) {
-  // Et on accède directement à .slug, sans await
-  const verrier = await getVerrier(params.slug);
+export default async function VerrierPage(props: { params: any }) {
+  const { params } = await props;
+  const awaitedParams = await params;
+  const verrier = await getVerrier(awaitedParams.slug);
 
   if (!verrier) {
     notFound();

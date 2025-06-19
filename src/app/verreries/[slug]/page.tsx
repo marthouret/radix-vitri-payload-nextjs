@@ -321,9 +321,10 @@ async function getVerrerie(slug: string): Promise<VerrerieType | null> {
   } 
 }
 
-export async function generateMetadata({ params }: { params: any }): Promise<Metadata> {
-  // On récupère les données de la verrerie pour générer les métadonnées
-  const verrerie = await getVerrerie(params.slug); // Récupérer les données pour le titre
+export async function generateMetadata(props: { params: any }): Promise<Metadata> {
+  const { params } = await props;
+  const awaitedParams = await params;
+  const verrerie = await getVerrerie(awaitedParams.slug);
 
   if (!verrerie) {
     return {
@@ -339,8 +340,10 @@ export async function generateMetadata({ params }: { params: any }): Promise<Met
 }
 
 // --- Composant de Page ---
-export default async function VerreriePage({ params }: { params: any }) {
-  const verrerie = await getVerrerie(params.slug);
+export default async function VerreriePage(props: { params: any }) {
+  const { params } = await props;
+  const awaitedParams = await params;
+  const verrerie = await getVerrerie(awaitedParams.slug);
 
   console.log("Données brutes pour la verrerie (nombre d'engagements) :", JSON.stringify(verrerie?.engagements?.length, null, 2));
 

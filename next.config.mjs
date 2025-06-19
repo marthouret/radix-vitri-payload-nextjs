@@ -35,6 +35,11 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'radixvitri.com',
+        pathname: '/api/media/file/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'placehold.co',
         // pathname: '/**', // Optionnel si vous voulez être plus spécifique
       },

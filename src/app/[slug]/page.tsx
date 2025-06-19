@@ -25,22 +25,29 @@ async function getPage(slug: string): Promise<Page | null> {
 }
 
 // --- Fonction pour générer les métadonnées (titre de l'onglet) ---
-export async function generateMetadata({ params }: { params: any }): Promise<Metadata> {
-  const page = await getPage(params.slug);
-    // Si la page n'est pas trouvée, on retourne un titre générique
+export async function generateMetadata(props: { params: any }): Promise<Metadata> {
+  const { params } = await props;
+  const awaitedParams = await params;
+  const page = await getPage(awaitedParams.slug);
   if (!page) {
     return { title: 'Page non trouvée' }
   }
   return {
-    title: page.title, // ex: "À Propos | Radix Vitri"
+    title: page.title,
   }
 }
 
-// --- Le composant de la page ---
-export default async function PageTemplate({ params }: { params: any }) {
-  const page = await getPage(params.slug);
+export default async function PageTemplate(props: { params: any }) {
+  const { params } = await props;
+  const awaitedParams = await params;
 
-  // Si la page n'est pas trouvée dans Payload, on affiche une page 404
+  // =====> AJOUTEZ CETTE CONDITION <======
+  // Si le slug est 'admin', on dit à Next.js que cette page ne gère pas cette route.
+  if (awaitedParams.slug === 'admin') {
+    return notFound();
+  }
+
+  const page = await getPage(awaitedParams.slug);
   if (!page) {
     return notFound();
   }
