@@ -33,6 +33,11 @@ const nextConfig = {
         port: '3000',
         pathname: '/api/media/file/**',
       },
+    {
+      protocol: 'https',
+      hostname: 'radixvitri.com',
+      pathname: '/api/media/file/**',
+    },
       {
         protocol: 'https',
         hostname: 'placehold.co',
