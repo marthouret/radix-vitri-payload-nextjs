@@ -2,6 +2,7 @@
 
 import type { CollectionConfig } from 'payload';
 import { generateBaseSlug } from '@/utils/slugs';
+// import { revalidateHomeAndList } from '../hooks/revalidate'
 
 export const Histoires: CollectionConfig = {
   slug: 'histoires',
@@ -16,6 +17,9 @@ export const Histoires: CollectionConfig = {
   },
   access: {
     read: () => true, // Permet à n'importe qui de lire les 'Histoires' via l'API
+  },
+  hooks: {
+    // afterChange: [revalidateHomeAndList('verreries') as any], // On attache le hook ici
   },
   fields: [
     {

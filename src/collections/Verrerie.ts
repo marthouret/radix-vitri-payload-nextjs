@@ -1,6 +1,7 @@
 // src/collections/Verrerie.ts
 import { CollectionConfig } from 'payload';
 import { lexicalEditor, UploadFeature, RelationshipFeature, } from '@payloadcms/richtext-lexical';
+// import { revalidateHomeAndList } from '../hooks/revalidate'
 
 // Les imports pour les cellules personnalisées sont commentés pour l'instant
 // import { DateDeCreationCell, DateDeFermetureCell } from '../admin/components/FormattedDateCell';
@@ -19,6 +20,9 @@ const Verrerie: CollectionConfig = {
   },
   access: {
     read: () => true,
+  },
+  hooks: {
+    // afterChange: [revalidateHomeAndList('verreries') as any], // On attache le hook ici
   },
   fields: [
     {

@@ -2,12 +2,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
-import HistoireCard from '@/components/HistoireCard';
-import { getVerreriesForMap } from '@/lib/getVerreriesForMap';
 import SearchVerriers from '@/components/SearchVerriers';
-import MapAndFiltersClientWrapper from '@/components/MapAndFiltersClientWrapper';
-import { getFeaturedVerreries } from '@/lib/getFeaturedVerreries';
-import { getHistoiresRecentes } from '@/lib/getHistoiresRecentes';
+import MapAndFiltersSection from './_sections/MapAndFiltersSection';
+import FeaturedVerreries from './_sections/FeaturedVerreries';
+import HistoiresSection from './_sections/HistoiresSection';
+
+export const revalidate = 300; // Revalidation la plus courte possible pour cette page, 5 minutes
 
 // --- Composants de Section ---
 const HeroSection = () => {
@@ -59,17 +59,6 @@ const HeroSection = () => {
   );
 };
 
-const MapAndFiltersSection = async () => {
-  const verreriesForMap = await getVerreriesForMap();
-  return (
-    <section id="carte-interactive" className="scroll-mt-28 py-12 md:py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <MapAndFiltersClientWrapper initialVerreries={verreriesForMap} />
-      </div>
-    </section>
-  );
-};
-
 const SearchVerriersSection = () => {
   return (
     <section className="py-12 md:py-16 bg-cream"> {/* ou une autre couleur de fond pour la distinguer */}
@@ -80,98 +69,17 @@ const SearchVerriersSection = () => {
   );
 }
 
-const FeaturedVerreries = async () => {
-  const verreries = await getFeaturedVerreries();
-
-  if (!verreries || verreries.length === 0) {
-    return (
-      <section className="py-12 md:py-16 bg-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-blueGray-800 mb-10 font-serif">
-            À découvrir
-          </h2>
-          <p className="text-blueGray-600 font-sans">Aucune verrerie à afficher pour le moment.</p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="py-12 md:py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-blueGray-800 mb-10 text-center font-serif">
-          Quelques verreries à découvrir
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {verreries.map(v => (
-            <Link
-              href={`/verreries/${v.slug}`}
-              key={v.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1 group text-blueGray-600 no-underline hover:text-gold hover:underline hover:decoration-gold-dark"
-            >
-              {v.imageEnAvant && v.imageEnAvant.url ? (
-                // Remplacé <img> par next/image
-                <div className="relative w-full h-48"> 
-                  <img 
-                    src={v.imageEnAvant.url || undefined} 
-                    alt={v.imageEnAvant.alt || v.nomPrincipal} 
-                    //width={600} // Fournir des dimensions si vous n'utilisez pas fill
-                    //height={400}
-                    //fill // Si fill, le parent doit être position:relative et avoir des dimensions
-                    className="w-full h-full object-cover" // object-cover avec fill fonctionne bien
-                    //sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                </div>
-              ) : (
-                <div className="w-full h-48 bg-blueGray-100 flex items-center justify-center text-blueGray-400 font-sans">Image N/A</div>
-              )}
-              <div className="p-6 flex flex-col flex-grow">
-                <h3 className="text-xl font-semibold text-blueGray-800 mb-2 font-serif">{v.nomPrincipal}</h3>
-                <p className="text-blueGray-600 font-sans text-sm mb-4 flex-grow line-clamp-3 overflow-hidden">
-                  {v.resumeOuExtrait}
-                </p>
-                <span className="inline-block mt-auto text-gold group-hover:text-gold-dark font-semibold font-sans self-start">
-                  En savoir plus &rarr;
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const HistoiresSection = async () => {
-  const histoires = await getHistoiresRecentes();
-  if (histoires.length === 0) return null;
-
-  return (
-    <section className="py-12 md:py-16 bg-cream">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-blueGray-800 mb-10 text-center font-serif">
-          Dernières Histoires
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {histoires.map(histoire => (
-            <HistoireCard key={histoire.id} histoire={histoire} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
 // --- Composant Page Principal ---
-export default function HomePage() {
+export default async function HomePage() {
   return (
     <main className="min-h-screen bg-cream">
       <HeroSection />
-      <MapAndFiltersSection /> 
+      {await MapAndFiltersSection()}
       <SearchVerriersSection />
-      <FeaturedVerreries />
-      <HistoiresSection />
+      {await FeaturedVerreries()}
+      {await HistoiresSection()}
       {/* Vous pouvez ajouter d'autres sections ici si nécessaire */}
+      {/* Note : Si vous avez besoin de revalidation, utilisez l'API de revalidation de Next.js */}
     </main>
   );
 }
