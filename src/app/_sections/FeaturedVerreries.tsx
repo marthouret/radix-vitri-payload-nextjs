@@ -29,7 +29,7 @@ const FeaturedVerreries = async () => {
             <Link
               href={`/verreries/${v.slug}`}
               key={v.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1 group text-blueGray-600 no-underline hover:text-gold hover:underline hover:decoration-gold-dark"
+              className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1 group text-blueGray-600 no-underline"
             >
               {v.imageEnAvant && v.imageEnAvant.url ? (
                 <div className="relative w-full h-48">
@@ -46,7 +46,7 @@ const FeaturedVerreries = async () => {
                 <div className="w-full h-48 bg-blueGray-100 flex items-center justify-center text-blueGray-400 font-sans">Image N/A</div>
               )}
               <div className="p-6 flex flex-col flex-grow">
-                <h3 className="text-xl font-semibold text-blueGray-800 mb-2 font-serif">{v.nomPrincipal}</h3>
+                <h3 className="text-xl font-semibold text-blueGray-800 mb-2 font-serif group-hover:text-gold transition-colors">{v.nomPrincipal}</h3>
                 <p className="text-blueGray-600 font-sans text-sm mb-4 flex-grow line-clamp-3 overflow-hidden">
                   {v.resumeOuExtrait}
                 </p>
