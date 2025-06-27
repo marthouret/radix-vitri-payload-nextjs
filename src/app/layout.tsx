@@ -4,7 +4,6 @@ import { Playfair_Display, Lato, Limelight } from 'next/font/google';
 import './globals.css'; 
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-// import { getFooterPages } from '@/lib/getFooterPages';
 
 // Configuration de la police Playfair Display (pour les titres et le corps serif)
 const playfairDisplay = Playfair_Display({
@@ -47,6 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <Header />
         {children}
+        <Footer />
       </body>
     </html>
   );

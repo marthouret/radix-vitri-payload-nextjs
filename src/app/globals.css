@@ -3,6 +3,10 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  overflow-x: hidden;
+}
+
 /* Frise : CSS pour la page Verrier */
 .rc-card h3 a:hover,
 .rc-card .rc-card-title a { /* Adaptez le sélecteur après inspection du DOM */

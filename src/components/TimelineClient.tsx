@@ -32,6 +32,7 @@ interface ReactChronoProps {
     secondary?: string;
     cardBgColor?: string;
     cardForeColor?: string;
+    cardTitleColor?: string;
     titleColor?: string;
     titleColorActive?: string;
   };
@@ -44,7 +45,7 @@ interface ReactChronoProps {
 }
 
 // 2. Utiliser cette interface avec l'import dynamique
-const Chrono = dynamic<ReactChronoProps>( // <<<< Spécifiez le type des props ici
+const Chrono = dynamic<ReactChronoProps>( 
   () => import('react-chrono').then(mod => mod.Chrono as React.ComponentType<ReactChronoProps>), // Assertion de type ici aussi
   {
     ssr: false,
@@ -62,7 +63,7 @@ const TimelineClient: React.FC<TimelineClientProps> = ({ items }) => {
   }
 
   return (
-    <div style={{ width: "100%", minHeight: "400px" }}>
+    <div style={{ width: "99%", minHeight: "400px" }}>
       <Chrono
         items={items}
         mode="VERTICAL_ALTERNATING"
@@ -71,6 +72,7 @@ const TimelineClient: React.FC<TimelineClientProps> = ({ items }) => {
           secondary: 'rgba(218, 165, 32, 0.1)',
           cardBgColor: '#FFFFFF',
           cardForeColor: '#475569',
+          cardTitleColor: '#DAA520',
           titleColor: '#DAA520',
           titleColorActive: '#b8860b',
         }}
